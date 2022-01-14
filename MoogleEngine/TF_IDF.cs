@@ -7,6 +7,7 @@ namespace MoogleEngine
     {
         public static List<List<string>> Content = new();
 
+
         #region PreProcessing
         /// <summary>
         /// Get the name of the files without a full path
@@ -32,20 +33,25 @@ namespace MoogleEngine
             return filesWithoutPath;
         }
 
+        
         public static List<string> PreProcessingText(List<string> content)
         {
 
             for (int j = 0; j < content.Count; j++)
             {
+                //Delete words with tilde
                 content[j] = Regex.Replace(content[j].Normalize(NormalizationForm.FormD), @"[^a-zA-z0-9 ]+", "");
+
                 StringBuilder stringBuilder = new StringBuilder();
                 for (int k = 0; k < content[j].Length; k++)
                 {
+                    //Delete any char different of a latter or a digit
                     if (Char.IsLetterOrDigit(content[j][k]))
                         stringBuilder = stringBuilder.Append(content[j][k]);
                 }
                 content[j] = stringBuilder.ToString();
             }
+            // Delete any word with size==1
             for (int j = 0; j < content.Count; j++)
             {
                 if (content[j].Length <= 1)
@@ -53,6 +59,11 @@ namespace MoogleEngine
             }
             return content;
         }
+
+        /// <summary>
+        /// Realize a stemming to de list of the words
+        /// </summary>
+        /// <param name="content"></param>
         public static void Stem(List<string> content)
         {
             for (int i = 0; i < content.Count; i++)
@@ -63,54 +74,84 @@ namespace MoogleEngine
                 content[i] = stemmer.ToString();
             }
         }
-        //Pendiente llevar los numeros a letras
+
         /// <summary>
-        /// 
+        /// Read all documents and save all of words in a tuple
+        /// Item1 = a dict that save the words in a document with its frecuency
+        /// Item2 = a dict that save the words in a tittle document with its frecuency
         /// </summary>
         /// <param name="filesName"></param>
         /// <returns>A List that contains a tuple with the words in the title and the words in the file</returns>
         public static (List<Dictionary<string, int>>, List<Dictionary<string, int>>) ReadInside(string[] filesName, out List<string> allwords)
         {
             allwords = new();
-            List<(List<string>, List<string>)> filesRead = new();
             List<Dictionary<string, int>> wordsInFiles = new();
             List<Dictionary<string, int>> wordsInTitles = new();
             for (int i = 0; i < filesName.Length; i++)
             {
                 wordsInFiles.Add(new Dictionary<string, int>());
                 wordsInTitles.Add(new Dictionary<string, int>());
-                StreamReader reader = new StreamReader(filesName[i]);
-                Content.Add(reader.ReadToEnd().ToLower().Split().ToList<string>());
-                List<string> content = new List<string>();
-                string[] copy = new string[Content[i].Count];
-                Content[i].CopyTo(copy);
-                content.AddRange(copy);
-                PreProcessingText(content);
-                //Stem(content);
-                foreach (var word in content)
+
+                StreamReader sr = new StreamReader(filesName[i]);
+                Content.Add(new());
+                string word = "";
+                while (!sr.EndOfStream)
                 {
-                    if (wordsInFiles[i].ContainsKey(word)) wordsInFiles[i][word]++;
+                    var temp = ((char)sr.Read());
+                    temp = Char.ToLower(temp);
+                    if (Char.IsLetterOrDigit(temp))
+                        word += temp;
                     else
                     {
-                        wordsInFiles[i].Add(word, 1);
-                        if (!allwords.Contains(word)) allwords.Add(word);
+                        if (word == "" || word == " ") { word = ""; continue; }
+                        Content[i].Add(word);
+                        word = "";
+                    }
+
+                }
+                foreach (var item in Content[i])
+                {
+                    if (wordsInFiles[i].ContainsKey(item)) wordsInFiles[i][item]++;
+                    else
+                    {
+                        wordsInFiles[i].Add(item, 1);
+                        if (!allwords.Contains(item)) allwords.Add(item);
                     }
                 }
+
                 string filename = "";
                 for (int k = 0; k < filesName[i].Length; k++)
                 {
                     if (filesName[i][k] == '.') break;
                     filename += filesName[i][k];
                 }
-                var titles = filename.Split().ToList();
-                PreProcessingText(titles);
-                foreach (var word in titles)
+                word = "";
+                for (int j = 0; j < filename.Length; j++)
                 {
-                    if (wordsInTitles[i].ContainsKey(word)) wordsInTitles[i][word]++;
+                    var temp = Char.ToLower(filename[j]);
+                    if (Char.IsLetterOrDigit(temp))
+                    {
+                        word += temp;
+                    }
                     else
                     {
-                        wordsInTitles[i].Add(word, 1);
-                        if (!allwords.Contains(word)) allwords.Add(word);
+                        if (word == "" || word == " ") { word = ""; continue; }
+
+                        if (wordsInTitles[i].ContainsKey(word)) wordsInTitles[i][word]++;
+                        else
+                        {
+                            wordsInTitles[i].Add(word, 1);
+                            if (!allwords.Contains(word)) allwords.Add(word);
+                        }
+                    }
+                    if (j == filename.Length - 1 && word.Length != 0)
+                    {
+                        if (wordsInTitles[i].ContainsKey(word)) wordsInTitles[i][word]++;
+                        else
+                        {
+                            wordsInTitles[i].Add(word, 1);
+                            if (!allwords.Contains(word)) allwords.Add(word);
+                        }
                     }
                 }
             }
@@ -120,10 +161,10 @@ namespace MoogleEngine
 
         #region Setting TF_IDF
         /// <summary>
-        /// Calculate TF_IDF
+        /// Calculate TF_IDF ;)
         /// </summary>
         /// <param name="tuple"></param>
-        /// <returns>Returns a dictionary with Key=(doc_id,word) and Value=TF_IDF</returns>
+        /// <returns>Returns a list of dictionaries with Key=word and Value=TF_IDF</returns>
         public static List<Dictionary<string, double>> Calculate_TF_IDF((List<Dictionary<string, int>>, List<Dictionary<string, int>>) dataset)
         {
             List<Dictionary<string, double>> tf_idf = new();
@@ -131,6 +172,7 @@ namespace MoogleEngine
 
             double alpha = 0.3;
 
+            //TF_IDF of the document
             for (int i = 0; i < dataset.Item1.Count; i++)
             {
                 tf_idf.Add(new());
@@ -147,6 +189,8 @@ namespace MoogleEngine
                     tf_idf[i].Add(word, TF * IDF * alpha);
                 }
             }
+
+            //TF_IDF of the title
             for (int i = 0; i < dataset.Item2.Count; i++)
             {
                 tf_idf_title.Add(new());
@@ -165,7 +209,7 @@ namespace MoogleEngine
             }
 
 
-            //Merge DF_IDF
+            //Merge TF_IDF of the documents with its title
             for (int i = 0; i < tf_idf_title.Count; i++)
             {
                 foreach (var word in tf_idf_title[i].Keys)
@@ -178,6 +222,12 @@ namespace MoogleEngine
             return tf_idf;
         }
 
+        /// <summary>
+        /// Calculate the TF_IDF of the query ;)
+        /// </summary>
+        /// <param name="query_content"></param>
+        /// <param name="dataset"></param>
+        /// <returns></returns>
         public static List<Dictionary<string, double>> Calculate_TF_IDF_Query(List<string> query_content, (List<Dictionary<string, int>>, List<Dictionary<string, int>>) dataset)
         {
             Dictionary<string, double> query = new();
@@ -211,6 +261,13 @@ namespace MoogleEngine
         }
         #endregion
 
+
+        /// <summary>
+        /// Recieve a list with all the words with its TF_IDF
+        /// </summary>
+        /// <param name="tf_idf"></param>
+        /// <param name="allwords"></param>
+        /// <returns>Returns an array of array with all the TF_IDF</returns>
         public static double[][] CreateMatrix(List<Dictionary<string, double>> tf_idf, List<string> allwords)
         {
             double[][] matrix = new double[tf_idf.Count][];

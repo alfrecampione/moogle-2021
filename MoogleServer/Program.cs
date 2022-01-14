@@ -17,7 +17,6 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Error");
 }
 
-//Implementar un hilo q ejectute Controller.Start() al inicio del programa
 
 app.UseStaticFiles();
 
@@ -26,6 +25,8 @@ app.UseRouting();
 app.MapBlazorHub();
 app.MapFallbackToPage("/_Host");
 
-SearchMethod.path = "set";
+
+//Implementar un hilo q ejectute Controller.Start() al inicio del programa
+SearchMethod.path = "Content";
 SearchMethod.thread_start.Start();
 app.Run();

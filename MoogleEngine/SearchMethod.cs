@@ -23,7 +23,7 @@ public static class SearchMethod
     }
 
     #region MakeQuery
-    public static string[] MakeQuery(string query, int k, out double[] score)
+    public static (string[],string[]) MakeQuery(string query, int k, out double[] score)
     {
         query = ChangeQuery(query);
         var query_array = GetQueryArray(query);
@@ -48,7 +48,13 @@ public static class SearchMethod
         {
             files[i] = fileNames[GetIndex(result[i], coisine_sim)];
         }
-        return files;
+
+        string[] snipped = new string[files.Length];
+        if (query[query.Length - 1] == ' ')
+            snipped = SearchSnipped(query[0..(query.Length - 1)].Split(), files);
+        else
+            snipped = SearchSnipped(query.Split(), files);
+        return (files,snipped);
     }
     private static int GetIndex(double value, Dictionary<int, double> dict)
     {
@@ -173,6 +179,66 @@ public static class SearchMethod
         return m[n1, n2];
     }
 
+
+    public static string[] SearchSnipped(string[] query, string[] files)
+    {
+        int[] files_index = new int[files.Length];
+        for (int i = 0; i < files.Length; i++)
+        {
+            for (int j = 0; j < fileNames.Length; j++)
+            {
+                if (files[i] == fileNames[j])
+                {
+                    files_index[i] = j;
+                    break;
+                }
+            }
+        }
+
+        List<List<string>> files_content = new();
+        for (int i = 0; i < files_index.Length; i++)
+        {
+            files_content.Add(TF_IDF.Content[files_index[i]]);
+        }
+
+        List<string> words = new();
+
+        for (int i = 0; i < files_index.Length; i++)
+        {
+            words.Add(GetMostValueWord(query, files_index[i]));
+        }
+        string[] snipped = new string[files.Length];
+        for (int i = 0; i < snipped.Length; i++)
+        {
+            snipped[i] = "";
+            int index = files_content[i].IndexOf(words[i]);
+            for (int j = (index <= 10) ? 0 : index - 10; j <= index + 10; j++)
+            {
+                if (index != index + 10)
+                {
+                    snipped[i] += files_content[i][j] + " ";
+                }
+                else
+                    snipped[i] += files_content[i][j];
+            }
+        }
+        return snipped;
+    }
+    static string GetMostValueWord(string[] query, int file_index)
+    {
+        double[] query_values = new double[query.Length];
+        int[] words_index = new int[query.Length];
+        for (int i = 0; i < words_index.Length; i++)
+        {
+            words_index[i] = allwords.IndexOf(query[i]);
+        }
+        for (int i = 0; i < query_values.Length; i++)
+        {
+            query_values[i] = documents_matrix[file_index][words_index[i]];
+        }
+        return query[query_values.ToList().IndexOf(query_values.Max())];
+    }
+
     #endregion
 
 
@@ -203,42 +269,4 @@ public static class SearchMethod
         return coisine_sim;
     }
     #endregion
-
-    public static void SearchSnipped(string[] query, string[] files)
-    {
-        int[] files_index = new int[files.Length];
-        for (int i = 0; i < files.Length; i++)
-        {
-            for (int j = 0; j < fileNames.Length; j++)
-            {
-                if (files[i] == fileNames[j])
-                {
-                    files_index[i] = j;
-                    break;
-                }
-            }
-        }
-
-        List<List<string>> files_content = new();
-        for (int i = 0; i < TF_IDF.Content.Count; i++)
-        {
-            files_content.Add(TF_IDF.Content[i]);
-        }
-
-        List<List<int>> index_of = new();
-        for (int i = 0; i < files_index.Length; i++)
-        {
-            index_of.Add(new());
-            for (int j = 0; j < query.Length; j++)
-            {
-                index_of[j].Add(new());
-                for (int k = 0; k < files_content.Count; k++)
-                {
-                    index_of[j][k] = files_content[files_index[i]].IndexOf(query[j]);
-                }
-            }
-        }
-        string[] snipped = new string[files_index.Length];
-    }
-
 }
