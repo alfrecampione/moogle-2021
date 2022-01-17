@@ -16,7 +16,7 @@ public static class Moogle
         Lenguaje lenguaje = Lenguaje.Inglés;
         var results = SearchMethod.MakeQuery(query, top_results, out score);
 
-        if (((results.Item1.Length / top_results) * 100) <= 40)
+        if (false && ((results.Item1.Length / top_results) * 100) <= 40)
         {
             var stemm_query = query.ToLower().Split().ToList();
             //Implementando un stemmin de ingles
@@ -41,8 +41,7 @@ public static class Moogle
         {
             items.Add(new SearchItem(results.Item1[i], results.Item2[i], (float)score[i]));
         }
-        var suggestion = SearchMethod.ChangeQuery(query);
-        return new SearchResult(items.ToArray(), suggestion);
+        return new SearchResult(items.ToArray(), results.Item3);
 
     }
 }

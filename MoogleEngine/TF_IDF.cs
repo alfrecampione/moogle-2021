@@ -107,7 +107,6 @@ namespace MoogleEngine
                         Content[i].Add(word);
                         word = "";
                     }
-
                 }
                 foreach (var item in Content[i])
                 {
@@ -155,6 +154,7 @@ namespace MoogleEngine
                     }
                 }
             }
+            allwords.Sort();
             return (wordsInFiles, wordsInTitles);
         }
         #endregion
@@ -228,7 +228,7 @@ namespace MoogleEngine
         /// <param name="query_content"></param>
         /// <param name="dataset"></param>
         /// <returns></returns>
-        public static List<Dictionary<string, double>> Calculate_TF_IDF_Query(List<string> query_content, (List<Dictionary<string, int>>, List<Dictionary<string, int>>) dataset)
+        public static List<Dictionary<string, double>> Calculate_TF_IDF_Query(List<string> query_content, Dictionary<int, int> op4, (List<Dictionary<string, int>>, List<Dictionary<string, int>>) dataset)
         {
             Dictionary<string, double> query = new();
             Dictionary<string, double> tf_idf_query = new();
@@ -238,6 +238,10 @@ namespace MoogleEngine
                     query[word]++;
                 else
                     query.Add(word, 1);
+            }
+            for (int i = 0; i < op4.Count; i++)
+            {
+                query[query_content[op4.Keys.ToArray()[i]]] += op4[op4.Keys.ToArray()[i]];
             }
 
             foreach (var word in query.Keys)
@@ -268,13 +272,13 @@ namespace MoogleEngine
         /// <param name="tf_idf"></param>
         /// <param name="allwords"></param>
         /// <returns>Returns an array of array with all the TF_IDF</returns>
-        public static double[][] CreateMatrix(List<Dictionary<string, double>> tf_idf, List<string> allwords)
+        public static double[][] CreateMatrix(List<Dictionary<string, double>> tf_idf, string[] allwords)
         {
             double[][] matrix = new double[tf_idf.Count][];
             for (int i = 0; i < matrix.GetLength(0); i++)
             {
-                matrix[i] = new double[allwords.Count];
-                for (int j = 0; j < allwords.Count; j++)
+                matrix[i] = new double[allwords.Length];
+                for (int j = 0; j < allwords.Length; j++)
                 {
                     if (tf_idf[i].ContainsKey(allwords[j]))
                         matrix[i][j] = tf_idf[i][allwords[j]];
