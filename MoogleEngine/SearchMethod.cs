@@ -40,18 +40,7 @@ public static class SearchMethod
         bool query_changed = false;
         if (!check)
         {
-            //op1
-            if (op1.Count != 0)
-            {
-                var list = query_array.ToList();
-                for (int i = 0; i < op1.Count; i++)
-                {
-                    list.RemoveAt(op1[i]);
-                }
-                query_array = list.ToArray();
-            }
-
-            query_array = ChangeQuery(query_array, op4, out query_changed);
+            query_array = ChangeQuery(query_array, out query_changed);
         }
 
         query = "";
@@ -144,12 +133,12 @@ public static class SearchMethod
                 {
                     for (int j = 0; j < document_index.Count; j++)
                     {
-                        var words_index = Tools.GetIndexArray(query_array[op3[i]], query_array[op3[i] + 1], TF_IDF.Content[document_index[j]]);
+                        var words_index = Tools.GetIndexArray(query_array_copy[op3[i]], query_array_copy[op3[i] + 1], TF_IDF.Content[document_index[j]]);
                         int distance = Tools.Distance(words_index.Item1, words_index.Item2) - 1;
                         int raise = (TF_IDF.Content[document_index[j]].Count - distance) / TF_IDF.Content[document_index[j]].Count;
 
-                        int word1_index = Tools.GetIndex(query_array[op3[i]], allwords);
-                        int word2_index = Tools.GetIndex(query_array[op3[i] + 1], allwords);
+                        int word1_index = Tools.GetIndex(query_array_copy[op3[i]], allwords);
+                        int word2_index = Tools.GetIndex(query_array_copy[op3[i] + 1], allwords);
 
                         documents_matrix[j][word1_index] += raise;
                         documents_matrix[j][word2_index] += raise;
@@ -241,6 +230,30 @@ public static class SearchMethod
             else
             {
                 if (word == "" || word == " ") { word = ""; continue; }
+                switch (temp)
+                {
+                    case 'á':
+                        word += 'a';
+                        continue;
+                    case 'é':
+                        word += 'e';
+                        continue;
+                    case 'í':
+                        word += 'i';
+                        continue;
+                    case 'ó':
+                        word += 'o';
+                        continue;
+                    case 'ú':
+                        word += 'u';
+                        continue;
+                    case 'ñ':
+                        word += 'n';
+                        continue;
+                    case 'ü':
+                        word += 'u';
+                        continue;
+                }
                 processed_query.Add(word);
                 word = "";
             }
@@ -252,13 +265,11 @@ public static class SearchMethod
         }
         return processed_query.ToArray();
     }
-    public static string[] ChangeQuery(string[] query, Dictionary<int, int> op4, out bool change)
+    public static string[] ChangeQuery(string[] query, out bool change)
     {
         change = false;
         string[] tokens = query;
         List<string> missing_word = new();
-
-        List<string> results = new();
 
         //Searching missing words
         foreach (var word in tokens)
@@ -269,83 +280,49 @@ public static class SearchMethod
 
         if (missing_word.Count > 0)
         {
-            change = true;
-            List<Dictionary<string, int>> sim_val = new();
-            int index = 0;
-            foreach (var word in missing_word)
+            List<List<string>> replacements = new();
+            for (int j = 0; j < missing_word.Count; j++)
             {
-                sim_val.Add(new());
+                replacements.Add(new());
+                List<int> list = new();
                 for (int i = 0; i < allwords.Length; i++)
                 {
-                    sim_val[index].Add(allwords[i], Levenshtein(word, allwords[i]));
+                    list.Add(Levenshtein(missing_word[j], allwords[i]));
                 }
-                index++;
-            }
-
-            var values = sim_val[0].Values.ToList();
-            values.Sort();
-            index = 0;
-            List<List<string>> replacements = new();
-            replacements.Add(new());
-            foreach (var key in sim_val[0].Keys)
-            {
-                if (sim_val[0][key] == values[index])
+                int min = list.Min();
+                for (int i = 0; i < list.Count; i++)
                 {
-                    replacements[0].Add(key);
+                    if (list[i] == min)
+                        replacements[j].Add(allwords[i]);
                 }
             }
-            List<Dictionary<string, double>> replacements_TF_IDF = new();
-            List<string> selected = new();
-            replacements_TF_IDF.Add(new Dictionary<string, double>());
-            foreach (var word in replacements[0])
+            change = true;
+            List<string> result = new();
+            for (int i = 0; i < replacements.Count; i++)
             {
-                string replacement_query = "";
-                for (int i = 0; i < tokens.Length; i++)
+                List<double> average = new();
+                foreach (var word in replacements[i])
                 {
-                    if (tokens[i] == missing_word[0])
-                        replacement_query += word + " ";
-                    else replacement_query += tokens[i] + " ";
-                    if (i == tokens.Length - 1)
-                        replacement_query = replacement_query[0..(replacement_query.Length - 1)];
-                }
-                replacements_TF_IDF[0].Add(word, GetCoisineSim(TF_IDF.CreateMatrix((TF_IDF.Calculate_TF_IDF_Query(GetQueryArray(replacement_query).ToList(), op4, dataset)), allwords)[0])[0]);
-            }
-            List<double> max = new();
-            foreach (var dict in replacements_TF_IDF)
-            {
-                max.Add(dict.Values.Max());
-            }
-            for (int j = 0; j < max.Count; j++)
-            {
-                for (int i = 0; i < replacements_TF_IDF[j].Keys.Count; i++)
-                {
-                    if (max[j] == replacements_TF_IDF[j].Values.ToArray()[i])
+                    int index = allwords.ToList().IndexOf(word);
+                    double value = 0;
+                    for (int j = 0; j < documents_matrix.GetLength(0); j++)
                     {
-                        selected.Add(replacements_TF_IDF[j].Keys.ToArray()[i]); break;
+                        value += documents_matrix[j][index];
                     }
+                    value /= documents_matrix.GetLength(0);
+                    average.Add(value);
                 }
+                result.Add(replacements[i][average.IndexOf(average.Max())]);
             }
-            index = 0;
-            results.Add("");
-            for (int i = 0; i < tokens.Length; i++)
+            for (int i = 0; i < query.Length; i++)
             {
-                if (missing_word[index] == tokens[i])
+                if(missing_word.Contains(query[i]))
                 {
-                    if (i == tokens.Length - 1)
-                        results[0] += selected[index];
-                    else
-                        results[0] += selected[index] + " ";
-                }
-
-                else
-                {
-                    if (i == tokens.Length - 1)
-                        results[0] += tokens[i];
-                    else
-                        results[0] += tokens[i] + " ";
+                    int index = missing_word.IndexOf(query[i]);
+                    query[i] = result[index];
                 }
             }
-            return results[0].Split();
+            return query;
         }
         else
             return query;

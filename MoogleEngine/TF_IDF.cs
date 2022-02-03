@@ -18,7 +18,7 @@ namespace MoogleEngine
         {
             Directory.SetCurrentDirectory(Directory.GetParent(Directory.GetCurrentDirectory()).FullName);
             string target = Directory.GetCurrentDirectory() + "\\" + directory;
-            Directory.SetCurrentDirectory(target);  
+            Directory.SetCurrentDirectory(target);
 
             string[] files = Directory.GetFiles(Directory.GetCurrentDirectory());
             string[] filesWithoutPath = new string[files.Length];
@@ -31,48 +31,6 @@ namespace MoogleEngine
                 }
             }
             return filesWithoutPath;
-        }
-
-        
-        public static List<string> PreProcessingText(List<string> content)
-        {
-
-            for (int j = 0; j < content.Count; j++)
-            {
-                //Delete words with tilde
-                content[j] = Regex.Replace(content[j].Normalize(NormalizationForm.FormD), @"[^a-zA-z0-9 ]+", "");
-
-                StringBuilder stringBuilder = new StringBuilder();
-                for (int k = 0; k < content[j].Length; k++)
-                {
-                    //Delete any char different of a latter or a digit
-                    if (Char.IsLetterOrDigit(content[j][k]))
-                        stringBuilder = stringBuilder.Append(content[j][k]);
-                }
-                content[j] = stringBuilder.ToString();
-            }
-            // Delete any word with size==1
-            for (int j = 0; j < content.Count; j++)
-            {
-                if (content[j].Length <= 1)
-                    content.Remove(content[j]);
-            }
-            return content;
-        }
-
-        /// <summary>
-        /// Realize a stemming to de list of the words
-        /// </summary>
-        /// <param name="content"></param>
-        public static void Stem(List<string> content)
-        {
-            for (int i = 0; i < content.Count; i++)
-            {
-                Stemmer stemmer = new Stemmer();
-                stemmer.add(content[i].ToArray(), content[i].Length);
-                stemmer.stem();
-                content[i] = stemmer.ToString();
-            }
         }
 
         /// <summary>
@@ -104,17 +62,38 @@ namespace MoogleEngine
                     else
                     {
                         if (word == "" || word == " ") { word = ""; continue; }
+                        switch (temp)
+                        {
+                            case 'á':
+                                word += 'a';
+                                continue;
+                            case 'é':
+                                word += 'e';
+                                continue;
+                            case 'í':
+                                word += 'i';
+                                continue;
+                            case 'ó':
+                                word += 'o';
+                                continue;
+                            case 'ú':
+                                word += 'u';
+                                continue;
+                            case 'ñ':
+                                word += 'n';
+                                continue;
+                            case 'ü':
+                                word += 'u';
+                                continue;
+                        }
                         Content[i].Add(word);
+                        if (wordsInFiles[i].ContainsKey(word)) wordsInFiles[i][word]++;
+                        else
+                        {
+                            wordsInFiles[i].Add(word, 1);
+                            if (!allwords.Contains(word)) allwords.Add(word);
+                        }
                         word = "";
-                    }
-                }
-                foreach (var item in Content[i])
-                {
-                    if (wordsInFiles[i].ContainsKey(item)) wordsInFiles[i][item]++;
-                    else
-                    {
-                        wordsInFiles[i].Add(item, 1);
-                        if (!allwords.Contains(item)) allwords.Add(item);
                     }
                 }
 
@@ -135,6 +114,31 @@ namespace MoogleEngine
                     else
                     {
                         if (word == "" || word == " ") { word = ""; continue; }
+
+                        switch (temp)
+                        {
+                            case 'á':
+                                word += 'a';
+                                continue;
+                            case 'é':
+                                word += 'e';
+                                continue;
+                            case 'í':
+                                word += 'i';
+                                continue;
+                            case 'ó':
+                                word += 'o';
+                                continue;
+                            case 'ú':
+                                word += 'u';
+                                continue;
+                            case 'ñ':
+                                word += 'n';
+                                continue;
+                            case 'ü':
+                                word += 'u';
+                                continue;
+                        }
 
                         if (wordsInTitles[i].ContainsKey(word)) wordsInTitles[i][word]++;
                         else
