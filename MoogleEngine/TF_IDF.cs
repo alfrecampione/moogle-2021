@@ -171,12 +171,12 @@ namespace MoogleEngine
         /// </summary>
         /// <param name="tuple"></param>
         /// <returns>Returns a list of dictionaries with Key=word and Value=TF_IDF</returns>
-        public static List<Dictionary<string, double>> Calculate_TF_IDF((List<Dictionary<string, int>>, List<Dictionary<string, int>>) dataset)
+        public static List<Dictionary<string, float>> Calculate_TF_IDF((List<Dictionary<string, int>>, List<Dictionary<string, int>>) dataset)
         {
-            List<Dictionary<string, double>> tf_idf = new();
-            List<Dictionary<string, double>> tf_idf_title = new();
+            List<Dictionary<string, float>> tf_idf = new();
+            List<Dictionary<string, float>> tf_idf_title = new();
 
-            double alpha = 0.3;
+            float alpha = 0.3f;
 
             //TF_IDF of the document
             for (int i = 0; i < dataset.Item1.Count; i++)
@@ -184,14 +184,14 @@ namespace MoogleEngine
                 tf_idf.Add(new());
                 foreach (var word in dataset.Item1[i].Keys)
                 {
-                    double DF = 0;
-                    double TF = dataset.Item1[i][word] + ((dataset.Item2[i].ContainsKey(word)) ? dataset.Item2[i][word] : 0);
+                    float DF = 0;
+                    float TF = dataset.Item1[i][word] + ((dataset.Item2[i].ContainsKey(word)) ? dataset.Item2[i][word] : 0);
                     foreach (var doc in dataset.Item1)
                     {
                         if (doc.ContainsKey(word))
                             DF++;
                     }
-                    double IDF = Math.Log((double)dataset.Item1.Count / DF);
+                    float IDF = (float)Math.Log(dataset.Item1.Count / DF);
                     tf_idf[i].Add(word, TF * IDF * alpha);
                 }
             }
@@ -202,14 +202,14 @@ namespace MoogleEngine
                 tf_idf_title.Add(new());
                 foreach (var word in dataset.Item2[i].Keys)
                 {
-                    double DF = 0;
-                    double TF = dataset.Item2[i][word] + ((dataset.Item1[i].ContainsKey(word)) ? dataset.Item1[i][word] : 0);
+                    float DF = 0;
+                    float TF = dataset.Item2[i][word] + ((dataset.Item1[i].ContainsKey(word)) ? dataset.Item1[i][word] : 0);
                     foreach (var title in dataset.Item2)
                     {
                         if (title.ContainsKey(word))
                             DF++;
                     }
-                    double IDF = Math.Log((double)dataset.Item2.Count / DF);
+                    float IDF = (float)Math.Log(dataset.Item2.Count / DF);
                     tf_idf_title[i].Add(word, TF * IDF);
                 }
             }
@@ -234,10 +234,10 @@ namespace MoogleEngine
         /// <param name="query_content"></param>
         /// <param name="dataset"></param>
         /// <returns></returns>
-        public static List<Dictionary<string, double>> Calculate_TF_IDF_Query(List<string> query_content, Dictionary<int, int> op4, (List<Dictionary<string, int>>, List<Dictionary<string, int>>) dataset)
+        public static List<Dictionary<string, float>> Calculate_TF_IDF_Query(List<string> query_content, Dictionary<int, int> op4, (List<Dictionary<string, int>>, List<Dictionary<string, int>>) dataset)
         {
-            Dictionary<string, double> query = new();
-            Dictionary<string, double> tf_idf_query = new();
+            Dictionary<string, float> query = new();
+            Dictionary<string, float> tf_idf_query = new();
             foreach (var word in query_content)
             {
                 if (query.ContainsKey(word))
@@ -252,8 +252,8 @@ namespace MoogleEngine
 
             foreach (var word in query.Keys)
             {
-                double TF = query[word];
-                double DF = 0;
+                float TF = query[word];
+                float DF = 0;
                 for (int i = 0; i < dataset.Item1.Count; i++)
                 {
                     int temp = 0;
@@ -261,10 +261,10 @@ namespace MoogleEngine
                     if (temp == 0) temp = ((dataset.Item2[i].ContainsKey(word)) ? 1 : 0);
                     DF += temp;
                 }
-                double idf = Math.Log(dataset.Item1.Count / DF);
+                float idf = (float)Math.Log(dataset.Item1.Count / DF);
                 tf_idf_query.Add(word, TF * idf);
             }
-            List<Dictionary<string, double>> tf_idf = new();
+            List<Dictionary<string, float>> tf_idf = new();
             tf_idf.Add(tf_idf_query);
 
             return tf_idf;
@@ -278,12 +278,12 @@ namespace MoogleEngine
         /// <param name="tf_idf"></param>
         /// <param name="allwords"></param>
         /// <returns>Returns an array of array with all the TF_IDF</returns>
-        public static double[][] CreateMatrix(List<Dictionary<string, double>> tf_idf, List<string> allwords)
+        public static float[][] CreateMatrix(List<Dictionary<string, float>> tf_idf, List<string> allwords)
         {
-            double[][] matrix = new double[tf_idf.Count][];
+            float[][] matrix = new float[tf_idf.Count][];
             for (int i = 0; i < matrix.GetLength(0); i++)
             {
-                matrix[i] = new double[allwords.Count];
+                matrix[i] = new float[allwords.Count];
                 for (int j = 0; j < allwords.Count; j++)
                 {
                     if (tf_idf[i].ContainsKey(allwords[j]))

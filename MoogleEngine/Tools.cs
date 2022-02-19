@@ -45,7 +45,7 @@ namespace MoogleEngine
             return index;
         }
 
-        public static int GetIndex(double value, Dictionary<int, double> dict)
+        public static int GetIndex(float value, Dictionary<int, float> dict)
         {
             for (int i = 0; i < dict.Keys.Count; i++)
             {

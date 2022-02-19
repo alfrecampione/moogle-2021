@@ -5,7 +5,7 @@ public static class SearchMethod
     static string[] fileNames;
     public static List<string> allwords=new();
     static (List<Dictionary<string, int>>, List<Dictionary<string, int>>) dataset = new();
-    public static double[][] documents_matrix;
+    public static float[][] documents_matrix;
     public static string path;
     public static Thread thread_start = new Thread(new ThreadStart(Start));
 
@@ -24,7 +24,7 @@ public static class SearchMethod
     }
 
     //OPs = '!', '^', '~', '*'
-    public static (string[], string[], string) MakeQuery(string query, int k, out double[] score, bool check = false)
+    public static (string[], string[], string) MakeQuery(string query, int k, out float[] score, bool check = false)
     {
         //Operators
         var op1 = SearchOP1(query.Split());
@@ -52,7 +52,7 @@ public static class SearchMethod
         var query_matrix = TF_IDF.CreateMatrix(query_tf_idf, allwords)[0];
         var coisine_sim = Coisine_Sim.GetCoisineSim(query_matrix, documents_matrix);
 
-        double[] result = coisine_sim.Values.ToArray();
+        float[] result = coisine_sim.Values.ToArray();
         Array.Sort(result);
         Array.Reverse(result);
 
@@ -65,7 +65,7 @@ public static class SearchMethod
         if (length == 0)
             length = k;
 
-        score = new double[length];
+        score = new float[length];
         for (int i = 0; i < score.Length; i++)
         {
             score[i] = result[i];
@@ -306,11 +306,11 @@ public static class SearchMethod
             List<string> result = new();
             for (int i = 0; i < replacements.Count; i++)
             {
-                List<double> average = new();
+                List<float> average = new();
                 foreach (var word in replacements[i])
                 {
                     int index = allwords.ToList().IndexOf(word);
-                    double value = 0;
+                    float value = 0;
                     for (int j = 0; j < documents_matrix.GetLength(0); j++)
                     {
                         value += documents_matrix[j][index];
@@ -403,7 +403,7 @@ public static class SearchMethod
     }
     static string GetMostValueWord(string[] query, int file_index)
     {
-        double[] query_values = new double[query.Length];
+        float[] query_values = new float[query.Length];
         int[] words_index = new int[query.Length];
         for (int i = 0; i < words_index.Length; i++)
         {

@@ -12,7 +12,7 @@ public static class Moogle
     public static SearchResult Query(string query)
     {
         Console.WriteLine("Call");
-        double[] score;
+        float[] score;
         int top_results = 5;
         Lenguaje lenguaje = Lenguaje.Inglés;
         var results = SearchMethod.MakeQuery(query, top_results, out score);
