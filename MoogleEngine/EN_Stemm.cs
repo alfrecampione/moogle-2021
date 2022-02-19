@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace MoogleEngine
 {
-    class Stemmer
+    class En_Stemmer
     {
         private char[] b;
         private int i,     /* offset into b */
@@ -15,7 +15,7 @@ namespace MoogleEngine
         private static int INC = 50;
         /* unit of size whereby b is increased */
 
-        public Stemmer()
+        public En_Stemmer()
         {
             b = new char[INC];
             i = 0;
@@ -413,7 +413,7 @@ namespace MoogleEngine
                 k--;
         }
 
-        /** Stem the word placed into the Stemmer buffer through calls to add().
+        /** Stem the word placed into the En_Stemmer buffer through calls to add().
 		 * Returns true if the stemming process resulted in a word different
 		 * from the input.  You can retrieve the result with
 		 * getResultLength()/getResultBuffer() or toString().
@@ -434,21 +434,21 @@ namespace MoogleEngine
             i = 0;
         }
 
-        /** Test program for demonstrating the Stemmer.  It reads text from a
+        /** Test program for demonstrating the En_Stemmer.  It reads text from a
 		 * a list of files, stems each word, and writes the result to standard
 		 * output. Note that the word stemmed is expected to be in lower case:
-		 * forcing lower case must be done outside the Stemmer class.
-		 * Usage: Stemmer file-name file-name ...
+		 * forcing lower case must be done outside the En_Stemmer class.
+		 * Usage: En_Stemmer file-name file-name ...
 		 */
         public static void Main(String[] args)
         {
             if (args.Length == 0)
             {
-                Console.WriteLine("Usage:  Stemmer <input file>");
+                Console.WriteLine("Usage:  En_Stemmer <input file>");
                 return;
             }
             char[] w = new char[501];
-            Stemmer s = new Stemmer();
+            En_Stemmer s = new En_Stemmer();
             for (int i = 0; i < args.Length; i++)
                 try
                 {

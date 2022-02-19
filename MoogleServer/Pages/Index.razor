@@ -1,5 +1,4 @@
 ﻿@page "/"
-
 <PageTitle>Moogle!</PageTitle>
 
 <h1>🔍 Moogle!</h1>
@@ -23,17 +22,26 @@
     }
     @foreach (var item in result.Items()) {
     <li>
-        <div class="item">
-            <p class="title">@item.Title</p>
+
+        <div class="item" id="@(++count)">
+            <p class="title"><a href="#"  @onclick="Test"> @item.Title</a></p>
             <p>... @item.Snippet ...</p>
         </div>
     </li>
 }
 </ul>
-
 @code {
+    int count = 0;
+    int index = 0;
     private string query = "";
     private SearchResult result = new SearchResult();
+    public void Test()
+    {
+        System.Diagnostics.Process p = new System.Diagnostics.Process();
+        p.StartInfo.UseShellExecute = true;
+        p.StartInfo.FileName = TF_IDF.filesPath[index];
+        p.Start();
+    }
 
     private void RunQuery() {
         if(SearchMethod.first_search)

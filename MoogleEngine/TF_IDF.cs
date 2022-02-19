@@ -6,7 +6,7 @@ namespace MoogleEngine
     public static class TF_IDF
     {
         public static List<List<string>> Content = new();
-
+        public static string[] filesPath;
 
         #region PreProcessing
         /// <summary>
@@ -16,21 +16,23 @@ namespace MoogleEngine
         /// <returns></returns>
         public static string[] SetFilesNames(string directory)
         {
-            Directory.SetCurrentDirectory(Directory.GetParent(Directory.GetCurrentDirectory()).FullName);
-            string target = Directory.GetCurrentDirectory() + "\\" + directory;
-            Directory.SetCurrentDirectory(target);
-
-            string[] files = Directory.GetFiles(Directory.GetCurrentDirectory());
-            string[] filesWithoutPath = new string[files.Length];
+            string target = Directory.GetParent(Directory.GetCurrentDirectory()).FullName + "\\" + directory;
+            string[] files = Directory.GetFiles(target);
+            filesPath = files;
+            List<string> filesWithoutPath = new();
 
             for (int i = 0; i < files.Length; i++)
             {
-                for (int j = target.Length + 1; j < files[i].Length; j++)
+                string name = "";
+                for (int j = files[i].Length - 1; files[i][j] != '\\'; j--)
                 {
-                    filesWithoutPath[i] += files[i][j];
+                    name = files[i][j] + name;
                 }
+                if (name == ".gitignore")
+                    continue;
+                filesWithoutPath.Add(name);
             }
-            return filesWithoutPath;
+            return filesWithoutPath.ToArray();
         }
 
         /// <summary>
@@ -40,7 +42,7 @@ namespace MoogleEngine
         /// </summary>
         /// <param name="filesName"></param>
         /// <returns>A List that contains a tuple with the words in the title and the words in the file</returns>
-        public static (List<Dictionary<string, int>>, List<Dictionary<string, int>>) ReadInside(string[] filesName, out List<string> allwords)
+        public static (List<Dictionary<string, int>>, List<Dictionary<string, int>>) ReadInside(string[] filesName,out List<string> allwords)
         {
             allwords = new();
             List<Dictionary<string, int>> wordsInFiles = new();
@@ -50,7 +52,7 @@ namespace MoogleEngine
                 wordsInFiles.Add(new Dictionary<string, int>());
                 wordsInTitles.Add(new Dictionary<string, int>());
 
-                StreamReader sr = new StreamReader(filesName[i]);
+                StreamReader sr = new StreamReader(@".\..\Content\" + filesName[i]);
                 Content.Add(new());
                 string word = "";
                 while (!sr.EndOfStream)
@@ -276,13 +278,13 @@ namespace MoogleEngine
         /// <param name="tf_idf"></param>
         /// <param name="allwords"></param>
         /// <returns>Returns an array of array with all the TF_IDF</returns>
-        public static double[][] CreateMatrix(List<Dictionary<string, double>> tf_idf, string[] allwords)
+        public static double[][] CreateMatrix(List<Dictionary<string, double>> tf_idf, List<string> allwords)
         {
             double[][] matrix = new double[tf_idf.Count][];
             for (int i = 0; i < matrix.GetLength(0); i++)
             {
-                matrix[i] = new double[allwords.Length];
-                for (int j = 0; j < allwords.Length; j++)
+                matrix[i] = new double[allwords.Count];
+                for (int j = 0; j < allwords.Count; j++)
                 {
                     if (tf_idf[i].ContainsKey(allwords[j]))
                         matrix[i][j] = tf_idf[i][allwords[j]];

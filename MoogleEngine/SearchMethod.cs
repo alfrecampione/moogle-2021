@@ -3,7 +3,7 @@
 public static class SearchMethod
 {
     static string[] fileNames;
-    public static string[] allwords;
+    public static List<string> allwords=new();
     static (List<Dictionary<string, int>>, List<Dictionary<string, int>>) dataset = new();
     public static double[][] documents_matrix;
     public static string path;
@@ -13,18 +13,16 @@ public static class SearchMethod
 
     public static void Start()
     {
+        Tools.directory = path;
         //TF_IDF
         Console.WriteLine("Calculating TF_IDF");
         fileNames = TF_IDF.SetFilesNames(path);
-        List<string> vocabulary = new();
-        dataset = TF_IDF.ReadInside(fileNames, out vocabulary);
-        allwords = vocabulary.ToArray();
+        dataset = TF_IDF.ReadInside(fileNames,out allwords);
         var document_tf_idf = TF_IDF.Calculate_TF_IDF(dataset);
         documents_matrix = TF_IDF.CreateMatrix(document_tf_idf, allwords);
         Console.WriteLine("Finished");
     }
 
-    #region MakeQuery
     //OPs = '!', '^', '~', '*'
     public static (string[], string[], string) MakeQuery(string query, int k, out double[] score, bool check = false)
     {
@@ -35,13 +33,13 @@ public static class SearchMethod
         var op4 = SearchOP4(query.Split());
 
         var query_array = GetQueryArray(query);
-        var query_array_copy = query_array;
-
         bool query_changed = false;
         if (!check)
         {
             query_array = ChangeQuery(query_array, out query_changed);
         }
+        //query_array = AddSynonyms(query_array);
+        var query_array_copy = query_array;
 
         query = "";
         foreach (var word in query_array)
@@ -52,7 +50,7 @@ public static class SearchMethod
 
         var query_tf_idf = TF_IDF.Calculate_TF_IDF_Query(query_array.ToList(), op4, dataset);
         var query_matrix = TF_IDF.CreateMatrix(query_tf_idf, allwords)[0];
-        var coisine_sim = GetCoisineSim(query_matrix);
+        var coisine_sim = Coisine_Sim.GetCoisineSim(query_matrix, documents_matrix);
 
         double[] result = coisine_sim.Values.ToArray();
         Array.Sort(result);
@@ -137,9 +135,16 @@ public static class SearchMethod
                         int distance = Tools.Distance(words_index.Item1, words_index.Item2) - 1;
                         int raise = (TF_IDF.Content[document_index[j]].Count - distance) / TF_IDF.Content[document_index[j]].Count;
 
-                        int word1_index = Tools.GetIndex(query_array_copy[op3[i]], allwords);
-                        int word2_index = Tools.GetIndex(query_array_copy[op3[i] + 1], allwords);
-
+                        int word1_index = allwords.BinarySearch(query_array_copy[op3[i]]);//Tools.GetIndex(query_array_copy[op3[i]], allwords);
+                        int word2_index = -1;
+                        try
+                        {
+                            word2_index = allwords.BinarySearch(query_array_copy[op3[i + 1]]);// Tools.GetIndex(query_array_copy[op3[i] + 1], allwords);
+                        }
+                        catch (Exception)
+                        {
+                            break;
+                        }
                         documents_matrix[j][word1_index] += raise;
                         documents_matrix[j][word2_index] += raise;
                     }
@@ -263,6 +268,7 @@ public static class SearchMethod
                 word = "";
             }
         }
+
         return processed_query.ToArray();
     }
     public static string[] ChangeQuery(string[] query, out bool change)
@@ -285,7 +291,7 @@ public static class SearchMethod
             {
                 replacements.Add(new());
                 List<int> list = new();
-                for (int i = 0; i < allwords.Length; i++)
+                for (int i = 0; i < allwords.Count; i++)
                 {
                     list.Add(Levenshtein(missing_word[j], allwords[i]));
                 }
@@ -316,7 +322,7 @@ public static class SearchMethod
             }
             for (int i = 0; i < query.Length; i++)
             {
-                if(missing_word.Contains(query[i]))
+                if (missing_word.Contains(query[i]))
                 {
                     int index = missing_word.IndexOf(query[i]);
                     query[i] = result[index];
@@ -351,7 +357,7 @@ public static class SearchMethod
         }
         return m[n1, n2];
     }
-    public static string[] SearchSnipped(string[] query, string[] files)
+    static string[] SearchSnipped(string[] query, string[] files)
     {
         int[] files_index = new int[files.Length];
         for (int i = 0; i < files.Length; i++)
@@ -401,7 +407,7 @@ public static class SearchMethod
         int[] words_index = new int[query.Length];
         for (int i = 0; i < words_index.Length; i++)
         {
-            words_index[i] = Tools.GetIndex(query[i], allwords);
+            words_index[i] = allwords.BinarySearch(query[i]);//Tools.GetIndex(query[i], allwords);
         }
         for (int i = 0; i < query_values.Length; i++)
         {
@@ -409,35 +415,19 @@ public static class SearchMethod
         }
         return query[query_values.ToList().IndexOf(query_values.Max())];
     }
-
-    #endregion
-
-
-    #region Coisine_sim
-    private static double Magnitude(Vector v1)
+    static string[] AddSynonyms(string[] query)
     {
-        return Math.Sqrt(v1 * v1);
-    }
-    public static double CoisineSimilarity(Vector general, Vector query)
-    {
-        if ((Magnitude(general) * Magnitude(query)) == 0)
-            return 0;
-        return (general * query) / (Magnitude(general) * Magnitude(query));
-    }
-    private static Dictionary<int, double> GetCoisineSim(double[] query_array)
-    {
-        List<Vector> document_vectors = new List<Vector>();
-        foreach (var array in documents_matrix)
+        List<string> words = query.ToList();
+        for (int i = 0; i < query.Length; i++)
         {
-            document_vectors.Add(new Vector(array));
+            words.Union(Tools.SearchSynonyms(query[i]).ToList());
         }
-        Vector query_vector = new(query_array);
-        Dictionary<int, double> coisine_sim = new();
-        for (int i = 0; i < document_vectors.Count; i++)
+        string[] check = words.ToArray();
+        foreach (var word in check)
         {
-            coisine_sim.Add(i, CoisineSimilarity(document_vectors[i], query_vector));
+            if(allwords.BinarySearch(word)<0)
+                words.Remove(word);
         }
-        return coisine_sim;
+        return words.ToArray();
     }
-    #endregion
 }

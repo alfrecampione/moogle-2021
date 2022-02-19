@@ -8,6 +8,7 @@ public static class Moogle
         Español,
         Inglés
     }
+    public static string[] files;
     public static SearchResult Query(string query)
     {
         Console.WriteLine("Call");
@@ -15,8 +16,8 @@ public static class Moogle
         int top_results = 5;
         Lenguaje lenguaje = Lenguaje.Inglés;
         var results = SearchMethod.MakeQuery(query, top_results, out score);
-
-        if (false && ((results.Item1.Length / top_results) * 100) <= 40)
+        files = results.Item1;
+        if (false && (results.Item1.Length / top_results) <= 0.4)
         {
             var stemm_query = query.ToLower().Split().ToList();
             //Implementando un stemmin de ingles

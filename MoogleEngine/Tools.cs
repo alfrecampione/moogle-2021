@@ -8,6 +8,7 @@ namespace MoogleEngine
 {
     public static class Tools
     {
+        public static string directory = "";
 
         public static bool Find<T>(T element, T[] list) where T : IComparable<T>
         {
@@ -84,5 +85,33 @@ namespace MoogleEngine
             }
             return min;
         }
+        public static string[] SearchSynonyms(string word)
+        {
+            var read = File.ReadAllLines(@".\..\" + directory + "\\sinónimos.txt");
+            string[][] synonyms = new string[read.GetLength(0)][];
+            for (int i = 0; i < synonyms.Length; i++)
+            {
+                synonyms[i] = read[i].Split(';');
+            }
+            int index = -1;
+            for (int i = 0; i < synonyms.Length; i++)
+            {
+                for (int j = 0; j < synonyms[i].Length; j++)
+                {
+                    if (word == synonyms[i][j])
+                    {
+                        index = i;
+                        break;
+                    }
+                }
+                if (index != -1)
+                    break;
+            }
+            if (index == -1)
+                return new string[0];
+            else
+                return synonyms[index];
+        }
+
     }
 }
