@@ -3,7 +3,7 @@
 public static class SearchMethod
 {
     static string[] fileNames;
-    public static List<string> allwords=new();
+    public static List<string> allwords = new();
     static (List<Dictionary<string, int>>, List<Dictionary<string, int>>) dataset = new();
     public static float[][] documents_matrix;
     public static string path;
@@ -17,39 +17,68 @@ public static class SearchMethod
         //TF_IDF
         Console.WriteLine("Calculating TF_IDF");
         fileNames = TF_IDF.SetFilesNames(path);
-        dataset = TF_IDF.ReadInside(fileNames,out allwords);
+        dataset = TF_IDF.ReadInside(fileNames, out allwords);
         var document_tf_idf = TF_IDF.Calculate_TF_IDF(dataset);
-        documents_matrix = TF_IDF.CreateMatrix(document_tf_idf, allwords);
+        documents_matrix = Tools.CreateMatrix(document_tf_idf, allwords);
         Console.WriteLine("Finished");
     }
-
+    public static string[] ChangeQuery(string[] query)
+    {
+        List<string> list = query.ToList();
+        for (int i = 0; i < query.Length; i++)
+        {
+            if(allwords.BinarySearch(query[i])<0)
+                list.Remove(query[i]);
+        }
+        return list.ToArray();
+    }
     //OPs = '!', '^', '~', '*'
     public static (string[], string[], string) MakeQuery(string query, int k, out float[] score, bool check = false)
     {
+        var deleteinn = query.Split();
+        List<string> querySplit = new();
+        for (int i = 0; i < deleteinn.Length; i++)
+        {
+            if(deleteinn[i] != "" && deleteinn[i] != " ")
+                querySplit.Add(deleteinn[i]);
+        }
         //Operators
-        var op1 = SearchOP1(query.Split());
-        var op2 = SearchOP2(query.Split());
-        var op3 = SearchOP3(query.Split());
-        var op4 = SearchOP4(query.Split());
+        var op1 = SearchOP1(querySplit.ToArray());
+        var op2 = SearchOP2(querySplit.ToArray());
+        var op3 = SearchOP3(querySplit.ToArray());
+        var op4 = SearchOP4(querySplit.ToArray());
+
+        score = new float[0];
 
         var query_array = GetQueryArray(query);
-        bool query_changed = false;
-        if (!check)
+        query_array = AddSynonyms(query_array);
+        string[] query_array_copy = new string[query.Length];
+        query_array.CopyTo(query_array_copy,0);
+        string[] temp =  new string[query_array.Length];
+        for (int i = 0; i < temp.Length; i++)
         {
-            query_array = ChangeQuery(query_array, out query_changed);
+            temp[i] = query_array[i];
         }
-        //query_array = AddSynonyms(query_array);
-        var query_array_copy = query_array;
+        string[] suggestion = SuggestQuery(temp, op4);
+        query_array = ChangeQuery(query_array);
 
-        query = "";
-        foreach (var word in query_array)
+
+        string true_suggestion="";
+        for (int i = 0; i < suggestion.Length; i++)
         {
-            query += word + " ";
+            if(i == suggestion.Length-1)
+                true_suggestion += suggestion[i];
+            else
+                true_suggestion += suggestion[i]+ " ";
         }
-        query = query.Remove(query.Length - 1);
+
+        if (query_array.Length == 0)
+        {
+            return (new string[0], new string[0], true_suggestion);
+        }
 
         var query_tf_idf = TF_IDF.Calculate_TF_IDF_Query(query_array.ToList(), op4, dataset);
-        var query_matrix = TF_IDF.CreateMatrix(query_tf_idf, allwords)[0];
+        var query_matrix = Tools.CreateMatrix(query_tf_idf, allwords)[0];
         var coisine_sim = Coisine_Sim.GetCoisineSim(query_matrix, documents_matrix);
 
         float[] result = coisine_sim.Values.ToArray();
@@ -99,9 +128,7 @@ public static class SearchMethod
                     }
                     if (!contains) new_files.Add(files[i]);
                 }
-                if (!query_changed)
-                    return (new_files.ToArray(), SearchSnipped(query.Split(), files), "");
-                return (new_files.ToArray(), SearchSnipped(query.Split(), files), query);
+                return (new_files.ToArray(), SearchSnipped(query_array, files), true_suggestion);
             }
             //op2
             if (op2.Count != 0)
@@ -120,9 +147,7 @@ public static class SearchMethod
                     }
                     if (contains) new_files.Add(files[i]);
                 }
-                if (!query_changed)
-                    return (new_files.ToArray(), SearchSnipped(query.Split(), files), "");
-                return (new_files.ToArray(), SearchSnipped(query.Split(), files), query);
+                return (new_files.ToArray(), SearchSnipped(query_array, files), true_suggestion);
             }
             //op3
             if (op3.Count != 0)
@@ -160,9 +185,7 @@ public static class SearchMethod
                 return MakeQuery(query, k, out score, true);
             }
         }
-        if (!query_changed)
-            return (files, SearchSnipped(query.Split(), files), "");
-        return (files, SearchSnipped(query.Split(), files), query);
+        return (files, SearchSnipped(query_array, files), true_suggestion);
     }
     static List<int> SearchOP1(string[] query)
     {
@@ -198,6 +221,8 @@ public static class SearchMethod
                 index.Add(i - 1);
             }
         }
+        if (index.Count>0 &&index[0] < 0)
+            return new();
         return index;
     }
     static Dictionary<int, int> SearchOP4(string[] query)
@@ -221,7 +246,7 @@ public static class SearchMethod
         return index;
     }
 
-    static string[] GetQueryArray(string query)
+    public static string[] GetQueryArray(string query)
     {
         List<string> processed_query = new List<string>();
         string word = "";
@@ -271,9 +296,75 @@ public static class SearchMethod
 
         return processed_query.ToArray();
     }
-    public static string[] ChangeQuery(string[] query, out bool change)
+    public static (string[], float) BestWord(string[] query, string missing_word, List<string> replacements, Dictionary<int, int> op4)
     {
-        change = false;
+        List<string> new_query = new();
+        List<float> results = new();
+        string[] temp_query = query;
+        for (int i = 0; i < replacements.Count; i++)
+        {
+            for (int j = 0; j < query.Length; j++)
+            {
+                if (query[j] == missing_word)
+                    temp_query[j] = replacements[i];
+            }
+            var query_tf_idf = TF_IDF.Calculate_TF_IDF_Query(query.ToList(), op4, dataset);
+            var query_matrix = Tools.CreateMatrix(query_tf_idf, allwords)[0];
+            var coisine_sim = Coisine_Sim.GetCoisineSim(query_matrix, documents_matrix);
+            results.Add(coisine_sim.Values.Max());
+        }
+        float value = results.Max();
+        int index = results.IndexOf(value);
+        for (int j = 0; j < query.Length; j++)
+        {
+            if (query[j] == missing_word)
+                query[j] = replacements[index];
+        }
+        return (query, value);
+    }
+    public static (string[], float) FindBestQuery(string[] query, List<string> missing_word, List<List<string>> replacements, Dictionary<int, int> op4)
+    {
+        if (replacements.Count == 1)
+        {
+            return BestWord(query, missing_word[0], replacements[0], op4);
+        }
+        (string[], float) result = (new string[query.Length], 0f);
+        for (int i = 0; i < replacements[0].Count; i++)
+        {
+            if (i != replacements[0].Count - 1)
+            {
+                string[] query1 = query;
+                string[] query2 = query;
+                for (int j = 0; j < query.Length; j++)
+                {
+                    if (query[j] == missing_word[0])
+                        query1[j] = replacements[0][i];
+                }
+                for (int j = 0; j < query.Length; j++)
+                {
+                    if (query[j] == missing_word[0])
+                        query2[j] = replacements[0][i + 1];
+                }
+                var result1 = FindBestQuery(query1, missing_word.ToArray()[1..].ToList(), replacements.ToArray()[1..].ToList(), op4);
+                var result2 = FindBestQuery(query2, missing_word.ToArray()[1..].ToList(), replacements.ToArray()[1..].ToList(), op4);
+                result = (result1.Item2 > result2.Item2) ? result1 : result2;
+            }
+            else
+            {
+                string[] query1 = query;
+                for (int j = 0; j < query.Length; j++)
+                {
+                    if (query[j] == missing_word[0])
+                        query1[j] = replacements[0][i];
+                }
+                result = FindBestQuery(query, missing_word.ToArray()[1..].ToList(), replacements.ToArray()[1..].ToList(), op4);
+            }
+        }
+        return result;
+
+    }
+    public static string[] SuggestQuery(string[] query, Dictionary<int, int> op4)
+    {
         string[] tokens = query;
         List<string> missing_word = new();
 
@@ -283,7 +374,6 @@ public static class SearchMethod
             if (!allwords.Contains(word))
                 missing_word.Add(word);
         }
-
         if (missing_word.Count > 0)
         {
             List<List<string>> replacements = new();
@@ -302,33 +392,12 @@ public static class SearchMethod
                         replacements[j].Add(allwords[i]);
                 }
             }
-            change = true;
-            List<string> result = new();
-            for (int i = 0; i < replacements.Count; i++)
+            if (missing_word.Count == 1)
+                return BestWord(query, missing_word[0], replacements[0], op4).Item1;
+            else
             {
-                List<float> average = new();
-                foreach (var word in replacements[i])
-                {
-                    int index = allwords.ToList().IndexOf(word);
-                    float value = 0;
-                    for (int j = 0; j < documents_matrix.GetLength(0); j++)
-                    {
-                        value += documents_matrix[j][index];
-                    }
-                    value /= documents_matrix.GetLength(0);
-                    average.Add(value);
-                }
-                result.Add(replacements[i][average.IndexOf(average.Max())]);
+                return FindBestQuery(query, missing_word, replacements, op4).Item1;
             }
-            for (int i = 0; i < query.Length; i++)
-            {
-                if (missing_word.Contains(query[i]))
-                {
-                    int index = missing_word.IndexOf(query[i]);
-                    query[i] = result[index];
-                }
-            }
-            return query;
         }
         else
             return query;
@@ -425,7 +494,7 @@ public static class SearchMethod
         string[] check = words.ToArray();
         foreach (var word in check)
         {
-            if(allwords.BinarySearch(word)<0)
+            if (!query.Contains(word) && allwords.BinarySearch(word) < 0)
                 words.Remove(word);
         }
         return words.ToArray();

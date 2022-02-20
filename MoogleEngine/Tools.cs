@@ -10,6 +10,10 @@ namespace MoogleEngine
     {
         public static string directory = "";
 
+        public static void Charge()
+        {
+
+        }
         public static bool Find<T>(T element, T[] list) where T : IComparable<T>
         {
             int value = BinarySearch(list, element, 0);
@@ -87,7 +91,27 @@ namespace MoogleEngine
         }
         public static string[] SearchSynonyms(string word)
         {
-            var read = File.ReadAllLines(@".\..\" + directory + "\\sinónimos.txt");
+            string english_synonyms = "\\synonyms.txt";
+            string spanish_synonyms = "\\sinónimos.txt";
+            string language = "";
+            if(Moogle.language== Language.English)
+            {
+                language = english_synonyms;
+                En_Stemmer stem = new En_Stemmer();
+                stem.add(word.ToArray(),word.Length);
+                stem.stem();
+                word = stem.ToString();
+            }
+            else
+            {
+                language = spanish_synonyms;
+                Es_Stemmer stem = new Es_Stemmer();
+                word = stem.Execute(word);
+            }
+            if (language == "")
+                return new string[0];
+            string path = Directory.GetParent(Directory.GetCurrentDirectory()).FullName;
+            var read = File.ReadAllLines(path + language);
             string[][] synonyms = new string[read.GetLength(0)][];
             for (int i = 0; i < synonyms.Length; i++)
             {
@@ -98,7 +122,7 @@ namespace MoogleEngine
             {
                 for (int j = 0; j < synonyms[i].Length; j++)
                 {
-                    if (word == synonyms[i][j])
+                    if (Equal(word, synonyms[i][j].ToLower()))
                     {
                         index = i;
                         break;
@@ -112,6 +136,35 @@ namespace MoogleEngine
             else
                 return synonyms[index];
         }
-
+        static bool Equal(string s1, string s2)
+        {
+            int index = Math.Min(s1.Length, s2.Length);
+            for (int i = 0; i < index; i++)
+            {
+                if (s1[i] == s2[i])
+                    return false;
+            }
+            return true;
+        }
+        /// <summary>
+        /// Recieve a list with all the words with its TF_IDF
+        /// </summary>
+        /// <param name="tf_idf"></param>
+        /// <param name="allwords"></param>
+        /// <returns>Returns an array of array with all the TF_IDF</returns>
+        public static float[][] CreateMatrix(List<Dictionary<string, float>> tf_idf, List<string> allwords)
+        {
+            float[][] matrix = new float[tf_idf.Count][];
+            for (int i = 0; i < matrix.GetLength(0); i++)
+            {
+                matrix[i] = new float[allwords.Count];
+                for (int j = 0; j < allwords.Count; j++)
+                {
+                    if (tf_idf[i].ContainsKey(allwords[j]))
+                        matrix[i][j] = tf_idf[i][allwords[j]];
+                }
+            }
+            return matrix;
+        }
     }
 }

@@ -166,6 +166,7 @@ namespace MoogleEngine
         #endregion
 
         #region Setting TF_IDF
+
         /// <summary>
         /// Calculate TF_IDF ;)
         /// </summary>
@@ -270,28 +271,5 @@ namespace MoogleEngine
             return tf_idf;
         }
         #endregion
-
-
-        /// <summary>
-        /// Recieve a list with all the words with its TF_IDF
-        /// </summary>
-        /// <param name="tf_idf"></param>
-        /// <param name="allwords"></param>
-        /// <returns>Returns an array of array with all the TF_IDF</returns>
-        public static float[][] CreateMatrix(List<Dictionary<string, float>> tf_idf, List<string> allwords)
-        {
-            float[][] matrix = new float[tf_idf.Count][];
-            for (int i = 0; i < matrix.GetLength(0); i++)
-            {
-                matrix[i] = new float[allwords.Count];
-                for (int j = 0; j < allwords.Count; j++)
-                {
-                    if (tf_idf[i].ContainsKey(allwords[j]))
-                        matrix[i][j] = tf_idf[i][allwords[j]];
-                }
-            }
-            return matrix;
-
-        }
     }
 }
