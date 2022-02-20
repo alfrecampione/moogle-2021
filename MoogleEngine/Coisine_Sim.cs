@@ -14,9 +14,10 @@ namespace MoogleEngine
         }
         private static float CoisineSimilarity(Vector general, Vector query)
         {
-            if ((Magnitude(general) * Magnitude(query)) == 0)
+            float calc = Magnitude(general) * Magnitude(query);
+            if (calc == 0)
                 return 0;
-            return (general * query) / (Magnitude(general) * Magnitude(query));
+            return (general * query) / (calc);
         }
         public static Dictionary<int, float> GetCoisineSim(float[] query_array, float[][] documents_matrix)
         {

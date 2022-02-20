@@ -3,7 +3,7 @@
 
 <h1>🔍 Moogle!</h1>
 
-<input class="p-1 my-4" @bind="query" placeholder="Introduzca su búsqueda">
+<input class="p-1 my-4" @bind="query" placeholder="Introduzca su búsqueda" @onkeyup="PressEnter">
 
 <button type="default" class="btn btn-primary" @onclick="RunQuery">🔍 Buscar</button>
 
@@ -23,8 +23,8 @@
     @foreach (var item in result.Items()) {
     <li>
 
-        <div class="item" id="@(++count)">
-            <p class="title"><a href="#"  @onclick="Test"> @item.Title</a></p>
+        <div class="item">
+            <p class="title"><a href="/OpenFile @item.Title">@item.Title</a></p>
             <p>... @item.Snippet ...</p>
         </div>
     </li>
@@ -35,7 +35,7 @@
     int index = 0;
     public string query = "";
     private SearchResult result = new SearchResult();
-    public void Test()
+    public void Test(MouseEventArgs e)
     {
         System.Diagnostics.Process p = new System.Diagnostics.Process();
         p.StartInfo.UseShellExecute = true;
@@ -47,14 +47,19 @@
         query = result.Suggestion;
         RunQuery();
     }
+    private void PressEnter(KeyboardEventArgs e)
+    {
+        if(e.Code == "Enter")
+        {
+            RunQuery();
+        }
+    }
     private void RunQuery() {
         if(SearchMethod.first_search)
         {
             SearchMethod.thread_start.Join();
             SearchMethod.first_search= false;
         }
-        
-        Console.WriteLine("Calculating search");
         result = Moogle.Query(query);
     }
 }

@@ -14,7 +14,7 @@ public static class Moogle
     {
         Console.WriteLine("Call");
         float[] score;
-        int top_results = 5;
+        int top_results = 10;
         var results = SearchMethod.MakeQuery(query.ToLower(), top_results, out score);
         files = results.Item1;
         //if ((results.Item1.Length / top_results) <= 0.4)

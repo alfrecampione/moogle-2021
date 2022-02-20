@@ -2,7 +2,7 @@
 
 public static class SearchMethod
 {
-    static string[] fileNames;
+    public static string[] fileNames;
     public static List<string> allwords = new();
     static (List<Dictionary<string, int>>, List<Dictionary<string, int>>) dataset = new();
     public static float[][] documents_matrix;
@@ -35,6 +35,7 @@ public static class SearchMethod
     //OPs = '!', '^', '~', '*'
     public static (string[], string[], string) MakeQuery(string query, int k, out float[] score, bool check = false)
     {
+        Console.WriteLine("Make");
         var deleteinn = query.Split();
         List<string> querySplit = new();
         for (int i = 0; i < deleteinn.Length; i++)
@@ -88,7 +89,7 @@ public static class SearchMethod
         int length = 0;
         for (int i = 0; i < k; i++)
         {
-            if (result[i] <= 0.01) break;
+            if (result[i] <= 0.001) break;
             else length++;
         }
         if (length == 0)
@@ -333,8 +334,8 @@ public static class SearchMethod
         {
             if (i != replacements[0].Count - 1)
             {
-                string[] query1 = query;
-                string[] query2 = query;
+                string[] query1 = query.ToArray();
+                string[] query2 = query.ToArray();
                 for (int j = 0; j < query.Length; j++)
                 {
                     if (query[j] == missing_word[0])
@@ -351,13 +352,13 @@ public static class SearchMethod
             }
             else
             {
-                string[] query1 = query;
+                string[] query1 = query.ToArray();
                 for (int j = 0; j < query.Length; j++)
                 {
                     if (query[j] == missing_word[0])
                         query1[j] = replacements[0][i];
                 }
-                result = FindBestQuery(query, missing_word.ToArray()[1..].ToList(), replacements.ToArray()[1..].ToList(), op4);
+                result = FindBestQuery(query1, missing_word.ToArray()[1..].ToList(), replacements.ToArray()[1..].ToList(), op4);
             }
         }
         return result;
@@ -446,7 +447,6 @@ public static class SearchMethod
         {
             files_content.Add(TF_IDF.Content[files_index[i]]);
         }
-
         List<string> words = new();
 
         for (int i = 0; i < files_index.Length; i++)
