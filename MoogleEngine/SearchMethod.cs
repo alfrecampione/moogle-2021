@@ -22,6 +22,12 @@ public static class SearchMethod
         documents_matrix = Tools.CreateMatrix(document_tf_idf, allwords);
         Console.WriteLine("Finished");
     }
+
+    /// <summary>
+    /// Delete all words that not appear in the vacabulary
+    /// </summary>
+    /// <param name="query"></param>
+    /// <returns></returns>
     public static string[] ChangeQuery(string[] query)
     {
         List<string> list = query.ToList();
@@ -32,10 +38,20 @@ public static class SearchMethod
         }
         return list.ToArray();
     }
+
     //OPs = '!', '^', '~', '*'
+    /// <summary>
+    /// Make the search
+    /// </summary>
+    /// <param name="query"></param>
+    /// <param name="k">Max of matched documents</param>
+    /// <param name="score">the score of all documents</param>
+    /// <param name="check"></param>
+    /// <returns>Return a tuple with Item1=Matched documents, Item2=Snipped of the documents, Item3=Suggestion</returns>
     public static (string[], string[], string) MakeQuery(string query, int k, out float[] score, bool check = false)
     {
         Console.WriteLine("Make");
+        //Deleting innecesary things
         var deleteinn = query.Split();
         List<string> querySplit = new();
         for (int i = 0; i < deleteinn.Length; i++)
@@ -50,20 +66,26 @@ public static class SearchMethod
         var op4 = SearchOP4(querySplit.ToArray());
 
         score = new float[0];
-
+        //Convert query into an array
         var query_array = GetQueryArray(query);
+
+        //Add synonyms
         query_array = AddSynonyms(query_array);
-        string[] query_array_copy = new string[query.Length];
+
+        string[] query_array_copy = new string[query_array.Length];
         query_array.CopyTo(query_array_copy,0);
         string[] temp =  new string[query_array.Length];
         for (int i = 0; i < temp.Length; i++)
         {
             temp[i] = query_array[i];
         }
+
+        //Find a suggestion
         string[] suggestion = SuggestQuery(temp, op4);
+        //Deleting missing words
         query_array = ChangeQuery(query_array);
 
-
+        //Converting suggestion to a string
         string true_suggestion="";
         for (int i = 0; i < suggestion.Length; i++)
         {
@@ -72,20 +94,20 @@ public static class SearchMethod
             else
                 true_suggestion += suggestion[i]+ " ";
         }
-
         if (query_array.Length == 0)
         {
             return (new string[0], new string[0], true_suggestion);
         }
 
+        //Making calculations
         var query_tf_idf = TF_IDF.Calculate_TF_IDF_Query(query_array.ToList(), op4, dataset);
         var query_matrix = Tools.CreateMatrix(query_tf_idf, allwords)[0];
         var coisine_sim = Coisine_Sim.GetCoisineSim(query_matrix, documents_matrix);
-
+        //Sorting results
         float[] result = coisine_sim.Values.ToArray();
         Array.Sort(result);
         Array.Reverse(result);
-
+        //Verifying the amount of the results
         int length = 0;
         for (int i = 0; i < k; i++)
         {
@@ -94,7 +116,7 @@ public static class SearchMethod
         }
         if (length == 0)
             length = k;
-
+        //Setting the score param
         score = new float[length];
         for (int i = 0; i < score.Length; i++)
         {
@@ -103,7 +125,7 @@ public static class SearchMethod
 
         string[] files = new string[length];
         List<int> document_index = new();
-
+        //Setting the files names
         for (int i = 0; i < length; i++)
         {
             if (result[i] == 0) files[i] = "";
@@ -127,9 +149,10 @@ public static class SearchMethod
                             break;
                         }
                     }
-                    if (!contains) new_files.Add(files[i]);
+                    if (contains) new_files.Add(files[i]);
                 }
-                return (new_files.ToArray(), SearchSnipped(query_array, files), true_suggestion);
+                files = new_files.ToArray();
+                //return (new_files.ToArray(), SearchSnipped(query_array, files), true_suggestion);
             }
             //op2
             if (op2.Count != 0)
@@ -137,18 +160,19 @@ public static class SearchMethod
                 List<string> new_files = new();
                 for (int i = 0; i < document_index.Count; i++)
                 {
-                    bool contains = true;
-                    for (int j = 0; j < op1.Count; j++)
+                    bool not_contains = true;
+                    for (int j = 0; j < op2.Count; j++)
                     {
-                        if (!TF_IDF.Content[document_index[i]].Contains(query_array_copy[op1[j]]))
+                        if (TF_IDF.Content[document_index[i]].Contains(query_array_copy[op2[j]]))
                         {
-                            contains = false;
+                            not_contains = false;
                             break;
                         }
                     }
-                    if (contains) new_files.Add(files[i]);
+                    if (not_contains) new_files.Add(files[i]);
                 }
-                return (new_files.ToArray(), SearchSnipped(query_array, files), true_suggestion);
+                files = new_files.ToArray();
+                //return (new_files.ToArray(), SearchSnipped(query_array, files), true_suggestion);
             }
             //op3
             if (op3.Count != 0)
@@ -169,7 +193,7 @@ public static class SearchMethod
                         }
                         catch (Exception)
                         {
-                            break;
+                            throw new Exception("Missing a word");
                         }
                         documents_matrix[j][word1_index] += raise;
                         documents_matrix[j][word2_index] += raise;
@@ -247,6 +271,11 @@ public static class SearchMethod
         return index;
     }
 
+    /// <summary>
+    /// Preproces the query and put it in an array 
+    /// </summary>
+    /// <param name="query"></param>
+    /// <returns></returns>
     public static string[] GetQueryArray(string query)
     {
         List<string> processed_query = new List<string>();
@@ -296,6 +325,52 @@ public static class SearchMethod
         }
 
         return processed_query.ToArray();
+    }
+
+    /// <summary>
+    /// Search for a similar query to suggest
+    /// </summary>
+    /// <param name="query"></param>
+    /// <param name="op4"></param>
+    /// <returns></returns>
+    public static string[] SuggestQuery(string[] query, Dictionary<int, int> op4)
+    {
+        string[] tokens = query;
+        List<string> missing_word = new();
+
+        //Searching missing words
+        foreach (var word in tokens)
+        {
+            if (!allwords.Contains(word))
+                missing_word.Add(word);
+        }
+        if (missing_word.Count > 0)
+        {
+            List<List<string>> replacements = new();
+            for (int j = 0; j < missing_word.Count; j++)
+            {
+                replacements.Add(new());
+                List<int> list = new();
+                for (int i = 0; i < allwords.Count; i++)
+                {
+                    list.Add(Levenshtein(missing_word[j], allwords[i]));
+                }
+                int min = list.Min();
+                for (int i = 0; i < list.Count; i++)
+                {
+                    if (list[i] == min)
+                        replacements[j].Add(allwords[i]);
+                }
+            }
+            if (missing_word.Count == 1)
+                return BestWord(query, missing_word[0], replacements[0], op4).Item1;
+            else
+            {
+                return FindBestQuery(query, missing_word, replacements, op4).Item1;
+            }
+        }
+        else
+            return query;
     }
     public static (string[], float) BestWord(string[] query, string missing_word, List<string> replacements, Dictionary<int, int> op4)
     {
@@ -364,45 +439,13 @@ public static class SearchMethod
         return result;
 
     }
-    public static string[] SuggestQuery(string[] query, Dictionary<int, int> op4)
-    {
-        string[] tokens = query;
-        List<string> missing_word = new();
 
-        //Searching missing words
-        foreach (var word in tokens)
-        {
-            if (!allwords.Contains(word))
-                missing_word.Add(word);
-        }
-        if (missing_word.Count > 0)
-        {
-            List<List<string>> replacements = new();
-            for (int j = 0; j < missing_word.Count; j++)
-            {
-                replacements.Add(new());
-                List<int> list = new();
-                for (int i = 0; i < allwords.Count; i++)
-                {
-                    list.Add(Levenshtein(missing_word[j], allwords[i]));
-                }
-                int min = list.Min();
-                for (int i = 0; i < list.Count; i++)
-                {
-                    if (list[i] == min)
-                        replacements[j].Add(allwords[i]);
-                }
-            }
-            if (missing_word.Count == 1)
-                return BestWord(query, missing_word[0], replacements[0], op4).Item1;
-            else
-            {
-                return FindBestQuery(query, missing_word, replacements, op4).Item1;
-            }
-        }
-        else
-            return query;
-    }
+    /// <summary>
+    /// Get the minimum number of transformations to make one word equal to another
+    /// </summary>
+    /// <param name="s1"></param>
+    /// <param name="s2"></param>
+    /// <returns></returns>
     private static int Levenshtein(string s1, string s2)
     {
         int coste = 0;

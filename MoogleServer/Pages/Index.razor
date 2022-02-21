@@ -3,9 +3,15 @@
 
 <h1>🔍 Moogle!</h1>
 
-<input class="p-1 my-4" @bind="query" placeholder="Introduzca su búsqueda" @onkeyup="PressEnter">
+@*<input class="p-1 my-4" @bind="query" placeholder="Introduzca su búsqueda" @onkeyup="PressEnter">
 
-<button type="default" class="btn btn-primary" @onclick="RunQuery">🔍 Buscar</button>
+<button type="default" class="btn btn-primary" @onclick="RunQuery">🔍 Buscar</button>*@
+
+<form @onsubmit="RunQuery">
+    <input class="p-1 my-4" @bind="query" placeholder="Introduzca su búsqueda">
+    <input type="submit" class="btn btn-primary" value="🔍 Buscar">
+</form>
+
 
 @if (!string.IsNullOrEmpty(result.Suggestion)) {
     <div class="suggestion">
