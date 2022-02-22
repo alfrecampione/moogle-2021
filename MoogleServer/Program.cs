@@ -26,7 +26,6 @@ app.MapBlazorHub();
 app.MapFallbackToPage("/_Host");
 
 
-//Implementar un hilo q ejectute Controller.Start() al inicio del programa
 SearchMethod.path = "set";
 SearchMethod.thread_start.Start();
 app.Run();

@@ -31,7 +31,7 @@
     {
         <li>
             <div class="item">
-                <p class="title"><a href="@(item.Path)">@item.Title</a></p>
+                <p class="title"><a target='__blank' style="color: blue; text-decoration: none;" href=@(item.Title+"/"+0) >@item.Title</a></p>
                 <p>... @item.Snippet ...</p>
             </div>
         </li>
@@ -42,11 +42,12 @@
     int index = 0;
     public string query = "";
     private SearchResult result = new SearchResult();
-    public void Test(MouseEventArgs e)
+    public void Test()
     {
         System.Diagnostics.Process p = new System.Diagnostics.Process();
         p.StartInfo.UseShellExecute = true;
-        p.StartInfo.FileName = TF_IDF.filesPath[index];
+        //string path = TF_IDF.filesPath[SearchMethod.fileNames.ToList().IndexOf(id)];
+        //p.StartInfo.FileName = path;
         p.Start();
     }
     public void SuggestQuery()

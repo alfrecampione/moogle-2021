@@ -1,0 +1,23 @@
+@page "/{id}/{page:int}"
+
+<PageTitle>Start File</PageTitle>
+<button type="default" class="btn btn-primary" @onclick=Open >Open file</button>
+
+
+@code {
+    [Parameter]
+    public string id { get; set; }
+    [Parameter]
+    public int pos { get; set; }
+    [Parameter]
+    public int page { get; set; }
+    private int newpage { get; set; }
+    public void Open()
+    {
+        System.Diagnostics.Process p = new System.Diagnostics.Process();
+        p.StartInfo.UseShellExecute = true;
+        string path = TF_IDF.filesPath[SearchMethod.fileNames.ToList().IndexOf(id)];
+        p.StartInfo.FileName = path;
+        p.Start();
+    }
+}
