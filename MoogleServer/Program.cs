@@ -26,6 +26,6 @@ app.MapBlazorHub();
 app.MapFallbackToPage("/_Host");
 
 
-SearchMethod.path = "set";
+SearchMethod.path = "Content";
 SearchMethod.thread_start.Start();
 app.Run();
