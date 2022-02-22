@@ -14,9 +14,9 @@ namespace MoogleEngine
         /// </summary>
         /// <param name="directory">Name of the directory with the files</param>
         /// <returns></returns>
-        public static string[] SetFilesNames(string directory)
+        public static string[] SetFilesNames(string? directory)
         {
-            string target = Directory.GetParent(Directory.GetCurrentDirectory()).FullName + "\\" + directory;
+            string target = Directory.GetParent(Directory.GetCurrentDirectory())?.FullName + "\\" + directory;
             string[] files = Directory.GetFiles(target);
             filesPath = files;
             List<string> filesWithoutPath = new();
@@ -42,7 +42,7 @@ namespace MoogleEngine
         /// </summary>
         /// <param name="filesName"></param>
         /// <returns>A List that contains a tuple with the words in the title and the words in the file</returns>
-        public static (List<Dictionary<string, int>>, List<Dictionary<string, int>>) ReadInside(string[] filesName,out List<string> allwords)
+        public static (List<Dictionary<string, int>>, List<Dictionary<string, int>>) ReadInside(string[] filesName, out List<string> allwords)
         {
             allwords = new();
             List<Dictionary<string, int>> wordsInFiles = new();
@@ -52,7 +52,7 @@ namespace MoogleEngine
                 wordsInFiles.Add(new Dictionary<string, int>());
                 wordsInTitles.Add(new Dictionary<string, int>());
 
-                StreamReader sr = new StreamReader(@".\..\Content\" + filesName[i]);
+                StreamReader sr = new StreamReader(filesPath[i]);
                 Content.Add(new());
                 string word = "";
                 while (!sr.EndOfStream)

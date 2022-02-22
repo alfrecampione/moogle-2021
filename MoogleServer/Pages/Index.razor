@@ -5,7 +5,7 @@
 
 @*<input class="p-1 my-4" @bind="query" placeholder="Introduzca su búsqueda" @onkeyup="PressEnter">
 
-<button type="default" class="btn btn-primary" @onclick="RunQuery">🔍 Buscar</button>*@
+    <button type="default" class="btn btn-primary" @onclick="RunQuery">🔍 Buscar</button>*@
 
 <form @onsubmit="RunQuery">
     <input class="p-1 my-4" @bind="query" placeholder="Introduzca su búsqueda">
@@ -13,28 +13,29 @@
 </form>
 
 
-@if (!string.IsNullOrEmpty(result.Suggestion)) {
+@if (!string.IsNullOrEmpty(result.Suggestion))
+{
     <div class="suggestion">
-        <p>¿Quisite decir <strong><a href="#" @onclick="SuggestQuery" >@result.Suggestion</a></strong>?</p>
+        <p>¿Quisite decir <strong><a href="#" @onclick="SuggestQuery">@result.Suggestion</a></strong>?</p>
     </div>
 }
 
 <ul class="results">
-    @if (!SearchMethod.first_search &&result.Items().Count() == 0)
+    @if (!SearchMethod.first_search && result.Items().Count() == 0)
     {
         <div class="item">
             <h2><b>No results obtained</b></h2>
         </div>
     }
-    @foreach (var item in result.Items()) {
-    <li>
-
-        <div class="item">
-            <p class="title"><a href="/OpenFile @item.Title">@item.Title</a></p>
-            <p>... @item.Snippet ...</p>
-        </div>
-    </li>
-}
+    @foreach (var item in result.Items())
+    {
+        <li>
+            <div class="item">
+                <p class="title"><a href="@(item.Path)">@item.Title</a></p>
+                <p>... @item.Snippet ...</p>
+            </div>
+        </li>
+    }
 </ul>
 @code {
     int count = 0;
@@ -55,16 +56,17 @@
     }
     private void PressEnter(KeyboardEventArgs e)
     {
-        if(e.Code == "Enter")
+        if (e.Code == "Enter")
         {
             RunQuery();
         }
     }
-    private void RunQuery() {
-        if(SearchMethod.first_search)
+    private void RunQuery()
+    {
+        if (SearchMethod.first_search)
         {
             SearchMethod.thread_start.Join();
-            SearchMethod.first_search= false;
+            SearchMethod.first_search = false;
         }
         result = Moogle.Query(query);
     }

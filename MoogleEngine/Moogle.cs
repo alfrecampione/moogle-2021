@@ -50,7 +50,8 @@ public static class Moogle
         List<SearchItem> items = new List<SearchItem>();
         for (int i = 0; i < results.Item1.Length; i++)
         {
-            items.Add(new SearchItem(results.Item1[i], results.Item2[i], (float)score[i]));
+            string path = TF_IDF.filesPath[SearchMethod.fileNames.ToList().IndexOf(results.Item1[i])];
+            items.Add(new SearchItem(results.Item1[i], results.Item2[i], (float)score[i], path));
         }
         string suggestion = "";
 

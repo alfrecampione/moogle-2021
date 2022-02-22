@@ -8,12 +8,8 @@ namespace MoogleEngine
 {
     public static class Tools
     {
-        public static string directory = "";
+        public static string? directory = "";
 
-        public static void Charge()
-        {
-
-        }
         public static bool Find<T>(T element, T[] list) where T : IComparable<T>
         {
             int value = BinarySearch(list, element, 0);
@@ -94,11 +90,11 @@ namespace MoogleEngine
             string english_synonyms = "\\synonyms.txt";
             string spanish_synonyms = "\\sinónimos.txt";
             string language = "";
-            if(Moogle.language== Language.English)
+            if (Moogle.language == Language.English)
             {
                 language = english_synonyms;
                 En_Stemmer stem = new En_Stemmer();
-                stem.add(word.ToArray(),word.Length);
+                stem.add(word.ToArray(), word.Length);
                 stem.stem();
                 word = stem.ToString();
             }
@@ -110,7 +106,7 @@ namespace MoogleEngine
             }
             if (language == "")
                 return new string[0];
-            string path = Directory.GetParent(Directory.GetCurrentDirectory()).FullName;
+            string? path = Directory.GetParent(Directory.GetCurrentDirectory())?.FullName;
             var read = File.ReadAllLines(path + language);
             string[][] synonyms = new string[read.GetLength(0)][];
             for (int i = 0; i < synonyms.Length; i++)

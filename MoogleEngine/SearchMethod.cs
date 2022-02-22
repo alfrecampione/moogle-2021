@@ -2,11 +2,11 @@
 
 public static class SearchMethod
 {
-    public static string[] fileNames;
+    public static string[]? fileNames;
     public static List<string> allwords = new();
     static (List<Dictionary<string, int>>, List<Dictionary<string, int>>) dataset = new();
-    public static float[][] documents_matrix;
-    public static string path;
+    public static float[][]? documents_matrix;
+    public static string? path;
     public static Thread thread_start = new Thread(new ThreadStart(Start));
 
     public static bool first_search = true;
@@ -33,7 +33,7 @@ public static class SearchMethod
         List<string> list = query.ToList();
         for (int i = 0; i < query.Length; i++)
         {
-            if(allwords.BinarySearch(query[i])<0)
+            if (allwords.BinarySearch(query[i]) < 0)
                 list.Remove(query[i]);
         }
         return list.ToArray();
@@ -56,7 +56,7 @@ public static class SearchMethod
         List<string> querySplit = new();
         for (int i = 0; i < deleteinn.Length; i++)
         {
-            if(deleteinn[i] != "" && deleteinn[i] != " ")
+            if (deleteinn[i] != "" && deleteinn[i] != " ")
                 querySplit.Add(deleteinn[i]);
         }
         //Operators
@@ -73,8 +73,8 @@ public static class SearchMethod
         query_array = AddSynonyms(query_array);
 
         string[] query_array_copy = new string[query_array.Length];
-        query_array.CopyTo(query_array_copy,0);
-        string[] temp =  new string[query_array.Length];
+        query_array.CopyTo(query_array_copy, 0);
+        string[] temp = new string[query_array.Length];
         for (int i = 0; i < temp.Length; i++)
         {
             temp[i] = query_array[i];
@@ -86,13 +86,13 @@ public static class SearchMethod
         query_array = ChangeQuery(query_array);
 
         //Converting suggestion to a string
-        string true_suggestion="";
+        string true_suggestion = "";
         for (int i = 0; i < suggestion.Length; i++)
         {
-            if(i == suggestion.Length-1)
+            if (i == suggestion.Length - 1)
                 true_suggestion += suggestion[i];
             else
-                true_suggestion += suggestion[i]+ " ";
+                true_suggestion += suggestion[i] + " ";
         }
         if (query_array.Length == 0)
         {
@@ -193,7 +193,7 @@ public static class SearchMethod
                         }
                         catch (Exception)
                         {
-                            throw new Exception("Missing a word");
+                            break;
                         }
                         documents_matrix[j][word1_index] += raise;
                         documents_matrix[j][word2_index] += raise;
@@ -246,7 +246,7 @@ public static class SearchMethod
                 index.Add(i - 1);
             }
         }
-        if (index.Count>0 &&index[0] < 0)
+        if (index.Count > 0 && index[0] < 0)
             return new();
         return index;
     }
