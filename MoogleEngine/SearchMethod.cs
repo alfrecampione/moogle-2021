@@ -21,9 +21,9 @@ public static class SearchMethod
         dataset = TF_IDF.ReadInside(fileNames, out allwords);
         Console.WriteLine("Calculate TF_IDF....");
         var document_tf_idf = TF_IDF.Calculate_TF_IDF(dataset);
-        Console.WriteLine("Convirtiendo a matriz");
+        Console.WriteLine("Convert to matriz....");
         documents_matrix = Tools.CreateMatrix(document_tf_idf, allwords);
-        Console.WriteLine("Finished");
+        Console.WriteLine("Finished!");
     }
 
     //OPs = '!', '^', '~', '*'
