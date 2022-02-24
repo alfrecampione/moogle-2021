@@ -6,6 +6,7 @@ namespace MoogleEngine
     public static class TF_IDF
     {
         public static List<List<string>> Content = new();
+        public static List<List<string>> TrueContent = new();
         public static string[] filesPath;
 
         #region PreProcessing
@@ -16,22 +17,23 @@ namespace MoogleEngine
         /// <returns></returns>
         public static string[] SetFilesNames(string? directory)
         {
-            string target = Directory.GetParent(Directory.GetCurrentDirectory())?.FullName + "\\" + directory;
+            string target = Path.Join(Directory.GetParent(Directory.GetCurrentDirectory())?.FullName, directory);
             string[] files = Directory.GetFiles(target);
-            filesPath = files;
             List<string> filesWithoutPath = new();
 
             for (int i = 0; i < files.Length; i++)
             {
-                string name = "";
-                for (int j = files[i].Length - 1; files[i][j] != '\\'; j--)
-                {
-                    name = files[i][j] + name;
-                }
-                if (name == ".gitignore")
-                    continue;
-                filesWithoutPath.Add(name);
+                filesWithoutPath.Add(Path.GetFileName(files[i]));
             }
+
+            int index = filesWithoutPath.IndexOf(".gitignore");
+            var temp = files.ToList();
+            if (index >= 0)
+            {
+                filesWithoutPath.RemoveAt(index);
+                temp.RemoveAt(index);
+            }
+            filesPath = temp.ToArray();
             return filesWithoutPath.ToArray();
         }
 
@@ -54,15 +56,21 @@ namespace MoogleEngine
 
                 StreamReader sr = new StreamReader(filesPath[i]);
                 Content.Add(new());
+                TrueContent.Add(new());
                 string word = "";
+                string trueWord = "";
                 while (!sr.EndOfStream)
                 {
                     var temp = ((char)sr.Read());
-                    temp = Char.ToLower(temp);
                     if (Char.IsLetterOrDigit(temp))
-                        word += temp;
+                    {
+                        trueWord += temp;
+                        word += Char.ToLower(temp);
+                    }
                     else
                     {
+                        if (Char.IsPunctuation(temp) || Char.IsSymbol(temp))
+                            trueWord += temp;
                         if (word == "" || word == " ") { word = ""; continue; }
                         switch (temp)
                         {
@@ -89,6 +97,7 @@ namespace MoogleEngine
                                 continue;
                         }
                         Content[i].Add(word);
+                        TrueContent[i].Add(trueWord);
                         if (wordsInFiles[i].ContainsKey(word)) wordsInFiles[i][word]++;
                         else
                         {
@@ -96,9 +105,22 @@ namespace MoogleEngine
                             if (!allwords.Contains(word)) allwords.Add(word);
                         }
                         word = "";
+                        trueWord = "";
+                    }
+                    if (sr.EndOfStream && word != "")
+                    {
+                        Content[i].Add(word);
+                        TrueContent[i].Add(trueWord);
+                        if (wordsInFiles[i].ContainsKey(word)) wordsInFiles[i][word]++;
+                        else
+                        {
+                            wordsInFiles[i].Add(word, 1);
+                            if (!allwords.Contains(word)) allwords.Add(word);
+                        }
+                        word = "";
+                        trueWord = "";
                     }
                 }
-
                 string filename = "";
                 for (int k = 0; k < filesName[i].Length; k++)
                 {

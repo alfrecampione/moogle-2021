@@ -14,29 +14,16 @@ public static class SearchMethod
     public static void Start()
     {
         Tools.directory = path;
-        //TF_IDF
-        Console.WriteLine("Calculating TF_IDF");
+        Console.WriteLine("------------Calculating TF_IDF------------");
+        Console.WriteLine("Getting files names....");
         fileNames = TF_IDF.SetFilesNames(path);
+        Console.WriteLine("Reading files....");
         dataset = TF_IDF.ReadInside(fileNames, out allwords);
+        Console.WriteLine("Calculate TF_IDF....");
         var document_tf_idf = TF_IDF.Calculate_TF_IDF(dataset);
+        Console.WriteLine("Convirtiendo a matriz");
         documents_matrix = Tools.CreateMatrix(document_tf_idf, allwords);
         Console.WriteLine("Finished");
-    }
-
-    /// <summary>
-    /// Delete all words that not appear in the vacabulary
-    /// </summary>
-    /// <param name="query"></param>
-    /// <returns></returns>
-    public static string[] ChangeQuery(string[] query)
-    {
-        List<string> list = query.ToList();
-        for (int i = 0; i < query.Length; i++)
-        {
-            if (allwords.BinarySearch(query[i]) < 0)
-                list.Remove(query[i]);
-        }
-        return list.ToArray();
     }
 
     //OPs = '!', '^', '~', '*'
@@ -140,30 +127,10 @@ public static class SearchMethod
                 List<string> new_files = new();
                 for (int i = 0; i < document_index.Count; i++)
                 {
-                    bool contains = false;
+                    bool not_contains = true;
                     for (int j = 0; j < op1.Count; j++)
                     {
                         if (TF_IDF.Content[document_index[i]].Contains(query_array_copy[op1[j]]))
-                        {
-                            contains = true;
-                            break;
-                        }
-                    }
-                    if (contains) new_files.Add(files[i]);
-                }
-                files = new_files.ToArray();
-                //return (new_files.ToArray(), SearchSnipped(query_array, files), true_suggestion);
-            }
-            //op2
-            if (op2.Count != 0)
-            {
-                List<string> new_files = new();
-                for (int i = 0; i < document_index.Count; i++)
-                {
-                    bool not_contains = true;
-                    for (int j = 0; j < op2.Count; j++)
-                    {
-                        if (TF_IDF.Content[document_index[i]].Contains(query_array_copy[op2[j]]))
                         {
                             not_contains = false;
                             break;
@@ -172,7 +139,25 @@ public static class SearchMethod
                     if (not_contains) new_files.Add(files[i]);
                 }
                 files = new_files.ToArray();
-                //return (new_files.ToArray(), SearchSnipped(query_array, files), true_suggestion);
+            }
+            //op2
+            if (op2.Count != 0)
+            {
+                List<string> new_files = new();
+                for (int i = 0; i < document_index.Count; i++)
+                {
+                    bool contains = false;
+                    for (int j = 0; j < op2.Count; j++)
+                    {
+                        if (TF_IDF.Content[document_index[i]].Contains(query_array_copy[op2[j]]))
+                        {
+                            contains = true;
+                            break;
+                        }
+                    }
+                    if (contains) new_files.Add(files[i]);
+                }
+                files = new_files.ToArray();
             }
             //op3
             if (op3.Count != 0)
@@ -185,18 +170,18 @@ public static class SearchMethod
                         int distance = Tools.Distance(words_index.Item1, words_index.Item2) - 1;
                         int raise = (TF_IDF.Content[document_index[j]].Count - distance) / TF_IDF.Content[document_index[j]].Count;
 
-                        int word1_index = allwords.BinarySearch(query_array_copy[op3[i]]);//Tools.GetIndex(query_array_copy[op3[i]], allwords);
-                        int word2_index = -1;
+                        int word1_index = allwords.BinarySearch(query_array_copy[op3[i]]);
+                        int word2_index;
                         try
                         {
-                            word2_index = allwords.BinarySearch(query_array_copy[op3[i + 1]]);// Tools.GetIndex(query_array_copy[op3[i] + 1], allwords);
+                            word2_index = allwords.BinarySearch(query_array_copy[op3[i + 1]]);
+                            documents_matrix[j][word1_index] += raise;
+                            documents_matrix[j][word2_index] += raise;
                         }
                         catch (Exception)
                         {
                             break;
                         }
-                        documents_matrix[j][word1_index] += raise;
-                        documents_matrix[j][word2_index] += raise;
                     }
                 }
                 query = "";
@@ -212,6 +197,22 @@ public static class SearchMethod
         }
         return (files, SearchSnipped(query_array, files), true_suggestion);
     }
+    /// <summary>
+    /// Delete all words that not appear in the vacabulary
+    /// </summary>
+    /// <param name="query"></param>
+    /// <returns></returns>
+    public static string[] ChangeQuery(string[] query)
+    {
+        List<string> list = query.ToList();
+        for (int i = 0; i < query.Length; i++)
+        {
+            if (allwords.BinarySearch(query[i]) < 0)
+                list.Remove(query[i]);
+        }
+        return list.ToArray();
+    }
+
     static List<int> SearchOP1(string[] query)
     {
         List<int> index = new();
@@ -353,7 +354,7 @@ public static class SearchMethod
                 List<int> list = new();
                 for (int i = 0; i < allwords.Count; i++)
                 {
-                    list.Add(Levenshtein(missing_word[j], allwords[i]));
+                    list.Add(Tools.Levenshtein(missing_word[j], allwords[i]));
                 }
                 int min = list.Min();
                 for (int i = 0; i < list.Count; i++)
@@ -439,37 +440,40 @@ public static class SearchMethod
         return result;
 
     }
-
-    /// <summary>
-    /// Get the minimum number of transformations to make one word equal to another
-    /// </summary>
-    /// <param name="s1"></param>
-    /// <param name="s2"></param>
-    /// <returns></returns>
-    private static int Levenshtein(string s1, string s2)
+    public static List<(int, int)> StemmMissingWord(string orig_word)
     {
-        int coste = 0;
-        int n1 = s1.Length;
-        int n2 = s2.Length;
-        int[,] m = new int[n1 + 1, n2 + 1];
-        for (int i = 0; i <= n1; i++)
+        En_Stemmer stemmEN = new En_Stemmer();
+        Es_Stemmer stemmES = new Es_Stemmer();
+
+        if (Moogle.language == Language.Spanish)
         {
-            m[i, 0] = i;
+            orig_word = stemmES.Execute(orig_word);
         }
-        for (int i = 1; i <= n2; i++)
+        if (Moogle.language == Language.English)
         {
-            m[0, i] = i;
+            orig_word = stemmEN.Execute(orig_word);
         }
-        for (int i1 = 1; i1 <= n1; i1++)
+        List<(int, int)> result_index = new();
+        int index = Tools.GetIndex<string>("pig", allwords.ToArray());
+        for (int i = 0; i < allwords.Count; i++)
         {
-            for (int i2 = 1; i2 <= n2; i2++)
+            string s = allwords[i];
+            if (Moogle.language == Language.Spanish)
             {
-                coste = (s1[i1 - 1] == s2[i2 - 1]) ? 0 : 1;
-                m[i1, i2] = Math.Min(Math.Min(m[i1 - 1, i2] + 1, m[i1, i2 - 1] + 1), m[i1 - 1, i2 - 1] + coste);
+                s = stemmES.Execute(allwords[i]);
             }
+            if (Moogle.language == Language.English)
+            {
+                s = stemmEN.Execute(allwords[i]);
+            }
+            int count = Tools.Equal(orig_word, s);
+            if (count > 0)
+                result_index.Add((i, count));
+
         }
-        return m[n1, n2];
+        return result_index;
     }
+
     static string[] SearchSnipped(string[] query, string[] files)
     {
         int[] files_index = new int[files.Length];
@@ -486,9 +490,11 @@ public static class SearchMethod
         }
 
         List<List<string>> files_content = new();
+        List<List<string>> true_files_content = new();
         for (int i = 0; i < files_index.Length; i++)
         {
             files_content.Add(TF_IDF.Content[files_index[i]]);
+            true_files_content.Add(TF_IDF.TrueContent[files_index[i]]);
         }
         List<string> words = new();
 
@@ -505,10 +511,10 @@ public static class SearchMethod
             {
                 if (index != index + 10)
                 {
-                    snipped[i] += files_content[i][j] + " ";
+                    snipped[i] += true_files_content[i][j] + " ";
                 }
                 else
-                    snipped[i] += files_content[i][j];
+                    snipped[i] += true_files_content[i][j];
             }
         }
         return snipped;

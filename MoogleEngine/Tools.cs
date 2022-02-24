@@ -17,7 +17,6 @@ namespace MoogleEngine
                 return false;
             return true;
         }
-
         public static int GetIndex<T>(T element, T[] content) where T : IComparable<T>
         {
             int index = BinarySearch(content, element, 0);
@@ -44,7 +43,6 @@ namespace MoogleEngine
             }
             return index;
         }
-
         public static int GetIndex(float value, Dictionary<int, float> dict)
         {
             for (int i = 0; i < dict.Keys.Count; i++)
@@ -54,7 +52,6 @@ namespace MoogleEngine
             }
             return -1;
         }
-
         public static (int[], int[]) GetIndexArray(string word1, string word2, List<string> content)
         {
             List<int> list1 = new();
@@ -68,7 +65,6 @@ namespace MoogleEngine
             }
             return (list1.ToArray(), list2.ToArray());
         }
-
         public static int Distance(int[] index1, int[] index2)
         {
             int min = int.MaxValue;
@@ -87,16 +83,14 @@ namespace MoogleEngine
         }
         public static string[] SearchSynonyms(string word)
         {
-            string english_synonyms = "\\synonyms.txt";
-            string spanish_synonyms = "\\sinónimos.txt";
+            string english_synonyms = "synonyms.txt";
+            string spanish_synonyms = "sinónimos.txt";
             string language = "";
             if (Moogle.language == Language.English)
             {
                 language = english_synonyms;
                 En_Stemmer stem = new En_Stemmer();
-                stem.add(word.ToArray(), word.Length);
-                stem.stem();
-                word = stem.ToString();
+                word = stem.Execute(word);
             }
             else
             {
@@ -107,7 +101,7 @@ namespace MoogleEngine
             if (language == "")
                 return new string[0];
             string? path = Directory.GetParent(Directory.GetCurrentDirectory())?.FullName;
-            var read = File.ReadAllLines(path + language);
+            var read = File.ReadAllLines(Path.Join(path, language));
             string[][] synonyms = new string[read.GetLength(0)][];
             for (int i = 0; i < synonyms.Length; i++)
             {
@@ -118,7 +112,7 @@ namespace MoogleEngine
             {
                 for (int j = 0; j < synonyms[i].Length; j++)
                 {
-                    if (Equal(word, synonyms[i][j].ToLower()))
+                    if (Equal(word, synonyms[i][j].ToLower())>0)
                     {
                         index = i;
                         break;
@@ -132,15 +126,20 @@ namespace MoogleEngine
             else
                 return synonyms[index];
         }
-        static bool Equal(string s1, string s2)
+        public static int Equal(string s1, string s2)
         {
             int index = Math.Min(s1.Length, s2.Length);
+            int count = 0;
+            if (index == 0)
+                return 0;
             for (int i = 0; i < index; i++)
             {
-                if (s1[i] == s2[i])
-                    return false;
+                if (s1[i] != s2[i])
+                    return 0;
+                else
+                    count++;
             }
-            return true;
+            return count;
         }
         /// <summary>
         /// Recieve a list with all the words with its TF_IDF
@@ -161,6 +160,36 @@ namespace MoogleEngine
                 }
             }
             return matrix;
+        }
+        /// <summary>
+        /// Get the minimum number of transformations to make one word equal to another
+        /// </summary>
+        /// <param name="s1"></param>
+        /// <param name="s2"></param>
+        /// <returns></returns>
+        public static int Levenshtein(string s1, string s2)
+        {
+            int coste = 0;
+            int n1 = s1.Length;
+            int n2 = s2.Length;
+            int[,] m = new int[n1 + 1, n2 + 1];
+            for (int i = 0; i <= n1; i++)
+            {
+                m[i, 0] = i;
+            }
+            for (int i = 1; i <= n2; i++)
+            {
+                m[0, i] = i;
+            }
+            for (int i1 = 1; i1 <= n1; i1++)
+            {
+                for (int i2 = 1; i2 <= n2; i2++)
+                {
+                    coste = (s1[i1 - 1] == s2[i2 - 1]) ? 0 : 1;
+                    m[i1, i2] = Math.Min(Math.Min(m[i1 - 1, i2] + 1, m[i1, i2 - 1] + 1), m[i1 - 1, i2 - 1] + coste);
+                }
+            }
+            return m[n1, n2];
         }
     }
 }
