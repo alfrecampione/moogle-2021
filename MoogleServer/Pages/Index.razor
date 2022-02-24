@@ -39,29 +39,12 @@
     }
 </ul>
 @code {
-    int count = 0;
-    int index = 0;
     public string query = "";
     private SearchResult result = new SearchResult();
-    public void Test()
-    {
-        System.Diagnostics.Process p = new System.Diagnostics.Process();
-        p.StartInfo.UseShellExecute = true;
-        //string path = TF_IDF.filesPath[SearchMethod.fileNames.ToList().IndexOf(id)];
-        //p.StartInfo.FileName = path;
-        p.Start();
-    }
     public void SuggestQuery()
     {
         query = result.Suggestion;
         RunQuery();
-    }
-    private void PressEnter(KeyboardEventArgs e)
-    {
-        if (e.Code == "Enter")
-        {
-            RunQuery();
-        }
     }
     private void RunQuery()
     {

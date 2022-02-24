@@ -17,6 +17,7 @@ public static class Moogle
         int top_results = 10;
         var results = SearchMethod.MakeQuery(query.ToLower(), top_results, out score);
         files = results.Item1;
+
         List<SearchItem> items = new List<SearchItem>();
         for (int i = 0; i < results.Item1.Length; i++)
         {

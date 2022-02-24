@@ -167,11 +167,11 @@ public static class SearchMethod
                     for (int j = 0; j < document_index.Count; j++)
                     {
                         var words_index = Tools.GetIndexArray(query_array_copy[op3[i]], query_array_copy[op3[i] + 1], TF_IDF.Content[document_index[j]]);
-                        int distance = Tools.Distance(words_index.Item1, words_index.Item2) - 1;
-                        int raise = (TF_IDF.Content[document_index[j]].Count - distance) / TF_IDF.Content[document_index[j]].Count;
+                        int distance = Tools.Distance(words_index.Item1, words_index.Item2);
+                        float raise = (1f / (float)distance);
 
                         int word1_index = allwords.BinarySearch(query_array_copy[op3[i]]);
-                        int word2_index;
+                        int word2_index = -1;
                         try
                         {
                             word2_index = allwords.BinarySearch(query_array_copy[op3[i + 1]]);
