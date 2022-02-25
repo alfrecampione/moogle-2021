@@ -14,7 +14,7 @@
     {
         System.Diagnostics.Process p = new System.Diagnostics.Process();
         p.StartInfo.UseShellExecute = true;
-        string path = TF_IDF.filesPath[SearchMethod.fileNames.ToList().IndexOf(id)];
+        string path = GlobalVariables.filesPath[GlobalVariables.fileNames.ToList().IndexOf(id)];
         p.StartInfo.FileName = path;
         p.Start();
     }

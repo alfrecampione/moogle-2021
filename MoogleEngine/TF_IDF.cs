@@ -5,10 +5,6 @@ namespace MoogleEngine
 {
     public static class TF_IDF
     {
-        public static List<List<string>> Content = new();
-        public static List<List<string>> TrueContent = new();
-        public static string[] filesPath;
-
         #region PreProcessing
         /// <summary>
         /// Get the name of the files without a full path
@@ -33,7 +29,7 @@ namespace MoogleEngine
                 filesWithoutPath.RemoveAt(index);
                 temp.RemoveAt(index);
             }
-            filesPath = temp.ToArray();
+            GlobalVariables.filesPath = temp.ToArray();
             return filesWithoutPath.ToArray();
         }
 
@@ -54,9 +50,9 @@ namespace MoogleEngine
                 wordsInFiles.Add(new Dictionary<string, int>());
                 wordsInTitles.Add(new Dictionary<string, int>());
 
-                StreamReader sr = new StreamReader(filesPath[i]);
-                Content.Add(new());
-                TrueContent.Add(new());
+                StreamReader sr = new StreamReader(GlobalVariables.filesPath[i]);
+                GlobalVariables.Content.Add(new());
+                GlobalVariables.TrueContent.Add(new());
                 string word = "";
                 string trueWord = "";
                 while (!sr.EndOfStream)
@@ -96,8 +92,8 @@ namespace MoogleEngine
                                 word += 'u';
                                 continue;
                         }
-                        Content[i].Add(word);
-                        TrueContent[i].Add(trueWord);
+                        GlobalVariables.Content[i].Add(word);
+                        GlobalVariables.TrueContent[i].Add(trueWord);
                         if (wordsInFiles[i].ContainsKey(word)) wordsInFiles[i][word]++;
                         else
                         {
@@ -109,8 +105,8 @@ namespace MoogleEngine
                     }
                     if (sr.EndOfStream && word != "")
                     {
-                        Content[i].Add(word);
-                        TrueContent[i].Add(trueWord);
+                        GlobalVariables.Content[i].Add(word);
+                        GlobalVariables.TrueContent[i].Add(trueWord);
                         if (wordsInFiles[i].ContainsKey(word)) wordsInFiles[i][word]++;
                         else
                         {

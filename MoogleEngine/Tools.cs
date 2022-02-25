@@ -8,8 +8,6 @@ namespace MoogleEngine
 {
     public static class Tools
     {
-        public static string? directory = "";
-
         public static bool Find<T>(T element, T[] list) where T : IComparable<T>
         {
             int value = BinarySearch(list, element, 0);
@@ -52,6 +50,14 @@ namespace MoogleEngine
             }
             return -1;
         }
+
+        /// <summary>
+        /// Get the array of word positions in the document
+        /// </summary>
+        /// <param name="word1"></param>
+        /// <param name="word2"></param>
+        /// <param name="content"></param>
+        /// <returns></returns>
         public static (int[], int[]) GetIndexArray(string word1, string word2, List<string> content)
         {
             List<int> list1 = new();
@@ -65,6 +71,13 @@ namespace MoogleEngine
             }
             return (list1.ToArray(), list2.ToArray());
         }
+
+        /// <summary>
+        /// Get the minimum distance between two words in a document
+        /// </summary>
+        /// <param name="index1"></param>
+        /// <param name="index2"></param>
+        /// <returns></returns>
         public static int Distance(int[] index1, int[] index2)
         {
             int min = int.MaxValue;
@@ -81,12 +94,18 @@ namespace MoogleEngine
             }
             return min;
         }
+
+        /// <summary>
+        /// Search the synonyms to a word in the synonyms database
+        /// </summary>
+        /// <param name="word"></param>
+        /// <returns></returns>
         public static string[] SearchSynonyms(string word)
         {
             string english_synonyms = "synonyms.txt";
             string spanish_synonyms = "sinónimos.txt";
             string language = "";
-            if (Moogle.language == Language.English)
+            if (GlobalVariables.Language == Language.English)
             {
                 language = english_synonyms;
                 En_Stemmer stem = new En_Stemmer();
@@ -126,6 +145,13 @@ namespace MoogleEngine
             else
                 return synonyms[index];
         }
+
+        /// <summary>
+        /// Get the number of consecutive equal characters (used to compare stemmized words)
+        /// </summary>
+        /// <param name="s1"></param>
+        /// <param name="s2"></param>
+        /// <returns></returns>
         public static int Equal(string s1, string s2)
         {
             int index = Math.Min(s1.Length, s2.Length);
@@ -141,6 +167,7 @@ namespace MoogleEngine
             }
             return count;
         }
+
         /// <summary>
         /// Recieve a list with all the words with its TF_IDF
         /// </summary>
@@ -161,8 +188,9 @@ namespace MoogleEngine
             }
             return matrix;
         }
+
         /// <summary>
-        /// Get the minimum number of transformations to make one word equal to another
+        /// Get the minimum number of transformations to make a word equal to another
         /// </summary>
         /// <param name="s1"></param>
         /// <param name="s2"></param>

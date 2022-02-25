@@ -21,7 +21,7 @@
 }
 
 <ul class="results">
-    @if (!SearchMethod.first_search && result.Items().Count() == 0)
+    @if (!GlobalVariables.first_search && result.Items().Count() == 0)
     {
         <div class="item">
             <h2><b>No results obtained</b></h2>
@@ -48,10 +48,10 @@
     }
     private void RunQuery()
     {
-        if (SearchMethod.first_search)
+        if (GlobalVariables.first_search)
         {
-            SearchMethod.thread_start.Join();
-            SearchMethod.first_search = false;
+            GlobalVariables.thread_start.Join();
+            GlobalVariables.first_search = false;
         }
         result = Moogle.Query(query);
     }

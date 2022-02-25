@@ -26,22 +26,22 @@ namespace MoogleEngine
                     if (sb[0] == '\'') sb.Remove(0, 1);
 
                     int r1 = 0, r2 = 0, rv = 0;
-                    computeR1R2RV(sb, ref r1, ref r2, ref rv);
+                    ComputeR1R2RV(sb, ref r1, ref r2, ref rv);
 
-                    step0(sb, rv);
+                    Step0(sb, rv);
                     int cont = sb.Length;
-                    step1(sb, r1, r2);
+                    Step1(sb, r1, r2);
 
                     if (sb.Length == cont)
                     {
-                        step2a(sb, rv);
+                        Step2a(sb, rv);
                         if (sb.Length == cont)
                         {
-                            step2b(sb, rv);
+                            Step2b(sb, rv);
                         }
                     }
-                    step3(sb, rv);
-                    removeAcutes(sb);
+                    Step3(sb, rv);
+                    RemoveAcutes(sb);
 
                     result = sb.ToString().ToLower();
                 }
@@ -50,7 +50,7 @@ namespace MoogleEngine
             return result;
         }
 
-        private void computeR1R2RV(StringBuilder sb, ref int r1, ref int r2, ref int rv)
+        private void ComputeR1R2RV(StringBuilder sb, ref int r1, ref int r2, ref int rv)
         {
             r1 = sb.Length;
             r2 = sb.Length;
@@ -59,7 +59,7 @@ namespace MoogleEngine
             //R1
             for (int i = 1; i < sb.Length; ++i)
             {
-                if ((!isVowel(sb[i])) && (isVowel(sb[i - 1])))
+                if ((!IsVowel(sb[i])) && (IsVowel(sb[i - 1])))
                 {
                     r1 = i + 1;
                     break;
@@ -69,7 +69,7 @@ namespace MoogleEngine
             //R2
             for (int i = r1 + 1; i < sb.Length; ++i)
             {
-                if ((!isVowel(sb[i])) && (isVowel(sb[i - 1])))
+                if ((!IsVowel(sb[i])) && (IsVowel(sb[i - 1])))
                 {
                     r2 = i + 1;
                     break;
@@ -79,11 +79,11 @@ namespace MoogleEngine
             //RV
             if (sb.Length >= 2)
             {
-                if (!isVowel(sb[1]))
+                if (!IsVowel(sb[1]))
                 {
                     for (int i = 1; i < sb.Length; ++i)
                     {
-                        if (isVowel(sb[i]))
+                        if (IsVowel(sb[i]))
                         {
                             rv = sb.Length > i ? i + 1 : sb.Length;
                             break;
@@ -92,11 +92,11 @@ namespace MoogleEngine
                 }
                 else
                 {
-                    if (isVowel(sb[0]) && isVowel(sb[1]))
+                    if (IsVowel(sb[0]) && IsVowel(sb[1]))
                     {
                         for (int i = 1; i < sb.Length; ++i)
                         {
-                            if (!isVowel(sb[i]))
+                            if (!IsVowel(sb[i]))
                             {
                                 rv = sb.Length > i ? i + 1 : sb.Length;
                                 break;
@@ -111,12 +111,12 @@ namespace MoogleEngine
             }
         }
 
-        private bool isVowel(char c)
+        private bool IsVowel(char c)
         {
             return Specials.Vocales.IndexOf(c) >= 0;
         }
 
-        private void step0(StringBuilder sb, int rv)
+        private void Step0(StringBuilder sb, int rv)
         {
             int index = -1;
 
@@ -124,23 +124,23 @@ namespace MoogleEngine
             {
                 if (sb.Length >= i)
                 {
-                    //Busco el indice del sufijo
+                    //Finding the suffix index
                     index = Specials.Step0.LastIndexOf(sb.ToString(sb.Length - i, i));
 
-                    //Si lo he encontrado...
+                    //If found it
                     if (index >= 0)
                     {
                         string aux = Specials.Step0[index];
 
-                        //busco el indice de la palabra a la que debe preceder
+                        //Searching for the index of the word that must precede
                         int index_after = Specials.AfterStep0.LastIndexOf(aux);
 
-                        //Si encuentro la palabra a la que debe preceder...
+                        //If found it
                         if (index_after >= 0)
                         {
                             string palabra = Specials.AfterStep0[index_after];
 
-                            //Compruebo si esa palabra precede, efectivamente, al sufijo
+                            //Check if that word actually precedes the suffix
                             if (sb.ToString(0, index).Substring(0, index_after).Length + palabra.Length == sb.ToString(0, index).Length)
                             {
                                 if (Specials.AfterStep0[index_after] == "yendo" && sb[index_after - 1] == 'u' && index_after >= rv)
@@ -160,7 +160,7 @@ namespace MoogleEngine
             }
         }
 
-        private void step1(StringBuilder sb, int r1, int r2)
+        private void Step1(StringBuilder sb, int r1, int r2)
         {
             int posicion = -1;
             int coleccion = -1;
@@ -389,7 +389,7 @@ namespace MoogleEngine
             }
         }
 
-        private void step2a(StringBuilder sb, int rv)
+        private void Step2a(StringBuilder sb, int rv)
         {
             int index = -1;
 
@@ -402,7 +402,7 @@ namespace MoogleEngine
             }
         }
 
-        private void step2b(StringBuilder sb, int rv)
+        private void Step2b(StringBuilder sb, int rv)
         {
             string seleccionado = "";
             int pos = -1;
@@ -453,7 +453,7 @@ namespace MoogleEngine
                 sb.Remove(pos, sb.Length - pos);
         }
 
-        private void step3(StringBuilder sb, int rv)
+        private void Step3(StringBuilder sb, int rv)
         {
             string seleccionado = "";
             int pos = -1;
@@ -504,7 +504,7 @@ namespace MoogleEngine
                 sb.Remove(pos - 1, sb.Length - pos + 1);
         }
 
-        private void removeAcutes(StringBuilder sb)
+        private void RemoveAcutes(StringBuilder sb)
         {
             for (int i = 0; i < sb.Length; ++i)
             {
