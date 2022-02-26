@@ -205,6 +205,7 @@ namespace MoogleEngine
                 {
                     float DF = 0;
                     float TF = dataset.Item1[i][word] + ((dataset.Item2[i].ContainsKey(word)) ? dataset.Item2[i][word] : 0);
+                    TF/=dataset.Item1[i].Values.Max();
                     foreach (var doc in dataset.Item1)
                     {
                         if (doc.ContainsKey(word))
@@ -223,6 +224,7 @@ namespace MoogleEngine
                 {
                     float DF = 0;
                     float TF = dataset.Item2[i][word] + ((dataset.Item1[i].ContainsKey(word)) ? dataset.Item1[i][word] : 0);
+                    TF /= dataset.Item1[i].Values.Max();
                     foreach (var title in dataset.Item2)
                     {
                         if (title.ContainsKey(word))

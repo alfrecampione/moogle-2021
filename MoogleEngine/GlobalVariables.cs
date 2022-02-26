@@ -18,7 +18,7 @@ namespace MoogleEngine
         public static float[][]? documents_matrix;
         static string? path;
 
-        private static Thread thread_start;
+        public static Thread thread_start;
 
         public static bool first_search;
 

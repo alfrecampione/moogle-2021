@@ -18,6 +18,7 @@ public static class SearchMethod
     }
 
     //OPs = '!', '^', '~', '*'
+    //   !little ~ pig ~ *wolf
     /// <summary>
     /// Make the search
     /// </summary>
@@ -36,6 +37,8 @@ public static class SearchMethod
             if (deleteinn[i] != "" && deleteinn[i] != " ")
                 querySplit.Add(deleteinn[i]);
         }
+        //Convert query into an array
+        var query_array = GetQueryArray(query);
         //Operators
         var op1 = SearchOP1(querySplit.ToArray());
         var op2 = SearchOP2(querySplit.ToArray());
@@ -43,9 +46,7 @@ public static class SearchMethod
         var op4 = SearchOP4(querySplit.ToArray());
 
         score = new float[0];
-        //Convert query into an array
-        var query_array = GetQueryArray(query);
-
+        
         //Add synonyms
         query_array = AddSynonyms(query_array);
 
@@ -230,11 +231,12 @@ public static class SearchMethod
     static List<int> SearchOP3(string[] query)
     {
         List<int> index = new();
+        int count = 0;
         for (int i = 0; i < query.Length; i++)
         {
             if (query[i] == "~")
             {
-                index.Add(i - 1);
+                index.Add(i - (++count));
             }
         }
         if (index.Count > 0 && index[0] < 0)
@@ -244,8 +246,11 @@ public static class SearchMethod
     static Dictionary<int, int> SearchOP4(string[] query)
     {
         Dictionary<int, int> index = new();
+        int op_count = 0;
         for (int i = 0; i < query.Length; i++)
         {
+            if (query[i] == "~")
+                op_count++;
             if (query[i][0] == '*')
             {
                 int count = 1;
@@ -256,7 +261,7 @@ public static class SearchMethod
                     else
                         break;
                 }
-                index.Add(i, count);
+                index.Add(i-op_count, count);
             }
         }
         return index;
