@@ -92,28 +92,25 @@ public static class SearchMethod
         var coisine_sim = Coisine_Sim.GetCoisineSim(query_matrix, GlobalVariables.documents_matrix);
         //Sorting results
         float[] result = coisine_sim.Values.ToArray();
-        float[] sort_result = result.ToArray();
-        Array.Sort(sort_result);
-        Array.Reverse(sort_result);
+        Array.Sort(result);
+        Array.Reverse(result);
 
         //Setting the score param
         score = result;
 
-        string[] files = new string[result.Length];
+        List<string> filesList = new();
         List<int> document_index = new();
 
         //Setting the files names
         for (int i = 0; i < result.Length; i++)
         {
-            if (result[i] == 0f)
-                document_index.Add(i);
-            else
+            if (result[i] != 0f)
             {
                 document_index.Add(Tools.GetIndex(result[i], coisine_sim));
+                filesList.Add(GlobalVariables.fileNames[document_index[i]]);
             }
-            files[i] = GlobalVariables.fileNames[document_index[i]];
         }
-
+        string[] files = filesList.ToArray();
         if (!check)
         {
             //op1
@@ -557,14 +554,16 @@ public static class SearchMethod
         {
             snipped[i] = "";
             int index = files_content[i].IndexOf(words[i]);
-            for (int j = (index <= 10) ? 0 : index - 10; j <= index + 10; j++)
+            if (index < 0)
             {
-                if (index != index + 10)
-                {
-                    snipped[i] += true_files_content[i][j] + " ";
-                }
-                else
-                    snipped[i] += true_files_content[i][j];
+                snipped[i] = " ";
+                continue;
+            }
+            int start = (index <= 10) ? 0 : index - 10;
+            int end = ((index + 10) > files_content[i].Count) ? files_content[i].Count - 1 : index + 10;
+            for (int j = start; j <= end; j++)
+            {
+                snipped[i] += true_files_content[i][j] + " ";
             }
         }
         return snipped;
