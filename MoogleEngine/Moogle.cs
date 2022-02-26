@@ -14,7 +14,8 @@ public static class Moogle
         var results = SearchMethod.MakeQuery(query.ToLower(), top_results, out score);
 
         List<SearchItem> items = new List<SearchItem>();
-        for (int i = 0; i < results.Item1.Length; i++)
+        int min = Math.Min(top_results,results.Item1.Length);
+        for (int i = 0; i < min; i++)
         {
             //Saving the results in a list
             string path = GlobalVariables.filesPath[GlobalVariables.fileNames.ToList().IndexOf(results.Item1[i])];
@@ -24,7 +25,8 @@ public static class Moogle
         //If query and suggestion are the same, set suggestion to empty
         var temp1 = SearchMethod.GetQueryArray(query);
         var temp2 = SearchMethod.GetQueryArray(results.Item3);
-        for (int i = 0; i < temp1.Length; i++)
+        min = Math.Min(temp1.Length, temp2.Length);
+        for (int i = 0; i < min; i++)
         {
             if (temp1[i] != temp2[i])
             {

@@ -29,6 +29,12 @@ public static class SearchMethod
     /// <returns>Return a tuple with Item1=Matched documents, Item2=Snipped of the documents, Item3=Suggestion</returns>
     public static (string[], string[], string) MakeQuery(string query, int k, out float[] score, bool check = false)
     {
+        if (GlobalVariables.dataset.Item1.Count == 0)
+        {
+            score = new float[0];
+            return (new string[0], new string[0], query);
+        }
+
         //Deleting innecesary things
         var deleteinn = query.Split();
         List<string> querySplit = new();
@@ -37,16 +43,18 @@ public static class SearchMethod
             if (deleteinn[i] != "" && deleteinn[i] != " ")
                 querySplit.Add(deleteinn[i]);
         }
-        //Convert query into an array
-        var query_array = GetQueryArray(query);
+
         //Operators
         var op1 = SearchOP1(querySplit.ToArray());
         var op2 = SearchOP2(querySplit.ToArray());
         var op3 = SearchOP3(querySplit.ToArray());
         var op4 = SearchOP4(querySplit.ToArray());
 
-        score = new float[0];
-        
+        if (op1.Count > 0)
+            query = DeleteOp1(query);
+        //Convert query into an array
+        var query_array = GetQueryArray(query);
+
         //Add synonyms
         query_array = AddSynonyms(query_array);
 
@@ -74,6 +82,7 @@ public static class SearchMethod
         }
         if (query_array.Length == 0)
         {
+            score = new float[0];
             return (new string[0], new string[0], true_suggestion);
         }
 
@@ -83,31 +92,26 @@ public static class SearchMethod
         var coisine_sim = Coisine_Sim.GetCoisineSim(query_matrix, GlobalVariables.documents_matrix);
         //Sorting results
         float[] result = coisine_sim.Values.ToArray();
-        Array.Sort(result);
-        Array.Reverse(result);
-        //Verifying the amount of the results
-        int length = 0;
-        for (int i = 0; i < k; i++)
-        {
-            if (result[i] <= 0.001) break;
-            else length++;
-        }
-        if (length == 0)
-            length = k;
-        //Setting the score param
-        score = new float[length];
-        for (int i = 0; i < score.Length; i++)
-        {
-            score[i] = result[i];
-        }
+        float[] sort_result = result.ToArray();
+        Array.Sort(sort_result);
+        Array.Reverse(sort_result);
 
-        string[] files = new string[length];
+        //Setting the score param
+        score = result;
+
+        string[] files = new string[result.Length];
         List<int> document_index = new();
+
         //Setting the files names
-        for (int i = 0; i < length; i++)
+        for (int i = 0; i < result.Length; i++)
         {
-            if (result[i] == 0) files[i] = "";
-            else { document_index.Add(Tools.GetIndex(result[i], coisine_sim)); files[i] = GlobalVariables.fileNames[document_index[i]]; }
+            if (result[i] == 0f)
+                document_index.Add(i);
+            else
+            {
+                document_index.Add(Tools.GetIndex(result[i], coisine_sim));
+            }
+            files[i] = GlobalVariables.fileNames[document_index[i]];
         }
 
         if (!check)
@@ -188,6 +192,26 @@ public static class SearchMethod
         }
         return (files, SearchSnipped(query_array, files), true_suggestion);
     }
+    public static string DeleteOp1(string query)
+    {
+        string[] temp = query.Split();
+        List<string> list = new();
+        for (int i = 0; i < temp.Length; i++)
+        {
+            if (temp[i][0] != '!')
+            {
+                list.Add(temp[i]);
+            }
+        }
+        string result = "";
+        for (int i = 0; i < list.Count; i++)
+        {
+            if (i == list.Count - 1)
+                result += list[i];
+            result += list[i] + " ";
+        }
+        return result;
+    }
     /// <summary>
     /// Delete all words that not appear in the vacabulary
     /// </summary>
@@ -261,7 +285,7 @@ public static class SearchMethod
                     else
                         break;
                 }
-                index.Add(i-op_count, count);
+                index.Add(i - op_count, count);
             }
         }
         return index;
