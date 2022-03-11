@@ -10,42 +10,34 @@ namespace MoogleEngine
     {
         public string Execute(string word)
         {
-            return Execute(word, false);
-        }
-
-        public string Execute(string word, bool useStopWords)
-        {
             string result = word;
-
-            if (!useStopWords && Specials.stop_words.IndexOf(word) < 0)
+            if (word.Length >= 3)
             {
-                if (word.Length >= 3)
+                StringBuilder sb = new StringBuilder(word.ToLower());
+
+                if (sb[0] == '\'') sb.Remove(0, 1);
+
+                int r1 = 0, r2 = 0, rv = 0;
+                ComputeR1R2RV(sb, ref r1, ref r2, ref rv);
+
+                Step0(sb, rv);
+                int cont = sb.Length;
+                Step1(sb, r1, r2);
+
+                if (sb.Length == cont)
                 {
-                    StringBuilder sb = new StringBuilder(word.ToLower());
-
-                    if (sb[0] == '\'') sb.Remove(0, 1);
-
-                    int r1 = 0, r2 = 0, rv = 0;
-                    ComputeR1R2RV(sb, ref r1, ref r2, ref rv);
-
-                    Step0(sb, rv);
-                    int cont = sb.Length;
-                    Step1(sb, r1, r2);
-
+                    Step2a(sb, rv);
                     if (sb.Length == cont)
                     {
-                        Step2a(sb, rv);
-                        if (sb.Length == cont)
-                        {
-                            Step2b(sb, rv);
-                        }
+                        Step2b(sb, rv);
                     }
-                    Step3(sb, rv);
-                    RemoveAcutes(sb);
-
-                    result = sb.ToString().ToLower();
                 }
+                Step3(sb, rv);
+                RemoveAcutes(sb);
+
+                result = sb.ToString().ToLower();
             }
+
 
             return result;
         }
